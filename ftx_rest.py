@@ -7,7 +7,7 @@ import hmac
 from ciso8601 import parse_datetime
 
 
-class FtxClient:
+class FtxRestClient:
     _ENDPOINT = 'https://ftx.com/api/'
 
     def __init__(self, api_key=None, api_secret=None, subaccount_name=None) -> None:

@@ -100,12 +100,12 @@ class WebsocketManager:
 class FtxWebsocketClient(WebsocketManager):
     _ENDPOINT = 'wss://ftx.com/ws/'
 
-    def __init__(self) -> None:
+    def __init__(self, api_key=None, api_secret=None) -> None:
         super().__init__()
         self._trades: DefaultDict[str, Deque] = defaultdict(lambda: deque([], maxlen=10000))
         self._fills: Deque = deque([], maxlen=10000)
-        self._api_key = ''  # TODO: Place your API key here
-        self._api_secret = ''  # TODO: Place your API secret here
+        self._api_key = api_key
+        self._api_secret = api_secret
         self._orderbook_update_events: DefaultDict[str, Event] = defaultdict(Event)
         self._reset_data()
 

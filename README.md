@@ -1,0 +1,1 @@
+"# ftx-spot-perp-arb" 

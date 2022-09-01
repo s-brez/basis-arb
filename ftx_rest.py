@@ -6,6 +6,8 @@ from requests import Request, Session, Response
 import hmac
 from ciso8601 import parse_datetime
 
+import json
+
 
 class FtxRestClient:
     _ENDPOINT = 'https://ftx.com/api/'
@@ -53,6 +55,7 @@ class FtxRestClient:
         else:
             if not data['success']:
                 raise Exception(data['error'])
+
             return data['result']
 
     def get_all_futures(self) -> List[dict]:
@@ -74,7 +77,7 @@ class FtxRestClient:
         return self._get(f'account')
 
     def get_open_orders(self, market: str = None) -> List[dict]:
-        return self._get(f'orders', {'market': market})
+        return {o["id"]: o for o in self._get(f'orders', {'market': market})}
 
     def get_order_history(
         self, market: str = None, side: str = None, order_type: str = None,
@@ -123,12 +126,26 @@ class FtxRestClient:
     def place_order(self, market: str, side: str, price: float, size: float, type: str = 'limit',
                     reduce_only: bool = False, ioc: bool = False, post_only: bool = False,
                     client_id: str = None, reject_after_ts: float = None) -> dict:
+        # order = {
+        #     'market': market,
+        #     'side': side,
+        #     'price': price,
+        #     'size': size,
+        #     'type': type,
+        #     'reduceOnly': reduce_only,
+        #     'ioc': ioc,
+        #     'postOnly': post_only,
+        #     'clientId': client_id,
+        #     'rejectAfterTs': reject_after_ts}
+
+        # print(json.dumps(order, indent=2))
+
         return self._post('orders', {
             'market': market,
             'side': side,
             'price': price,
-            'size': size,
             'type': type,
+            'size': size,
             'reduceOnly': reduce_only,
             'ioc': ioc,
             'postOnly': post_only,
@@ -208,8 +225,9 @@ class FtxRestClient:
                 total_usd += balance['usdValue']
         return total_usd
 
-    def get_positions(self, show_avg_price: bool = False) -> List[dict]:
-        return self._get('positions', {'showAvgPrice': show_avg_price})
+    # Does not show closed positions
+    def get_positions(self, show_avg_price: bool = False) -> dict:
+        return {p['future']: p for p in self._get('positions', {'showAvgPrice': show_avg_price}) if p['size'] > 0 or p['size'] < 0}
 
     def get_position(self, name: str, show_avg_price: bool = False) -> dict:
         return next(filter(lambda x: x['future'] == name, self.get_positions(show_avg_price)), None)

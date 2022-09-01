@@ -2,6 +2,8 @@ import hmac
 import json
 import time
 import zlib
+from copy import deepcopy
+from datetime import datetime
 from collections import defaultdict, deque
 from itertools import zip_longest
 from typing import DefaultDict, Deque, List, Dict, Tuple, Optional
@@ -100,12 +102,13 @@ class WebsocketManager:
 class FtxWebsocketClient(WebsocketManager):
     _ENDPOINT = 'wss://ftx.com/ws/'
 
-    def __init__(self, api_key=None, api_secret=None) -> None:
+    def __init__(self, api_key=None, api_secret=None, subaccount_name=None) -> None:
         super().__init__()
         self._trades: DefaultDict[str, Deque] = defaultdict(lambda: deque([], maxlen=10000))
         self._fills: Deque = deque([], maxlen=10000)
         self._api_key = api_key
         self._api_secret = api_secret
+        self._subaccount_name = subaccount_name
         self._orderbook_update_events: DefaultDict[str, Event] = defaultdict(Event)
         self._reset_data()
 
@@ -116,6 +119,7 @@ class FtxWebsocketClient(WebsocketManager):
         self._subscriptions: List[Dict] = []
         self._orders: DefaultDict[int, Dict] = defaultdict(dict)
         self._tickers: DefaultDict[str, Dict] = defaultdict(dict)
+        self._markets: DefaultDict[str, Dict] = defaultdict(dict)
         self._orderbook_timestamps: DefaultDict[str, float] = defaultdict(float)
         self._orderbook_update_events.clear()
         self._orderbooks: DefaultDict[str, Dict[str, DefaultDict[float, float]]] = defaultdict(
@@ -140,7 +144,7 @@ class FtxWebsocketClient(WebsocketManager):
             'sign': hmac.new(
                 self._api_secret.encode(), f'{ts}websocket_login'.encode(), 'sha256').hexdigest(),
             'time': ts,
-        }})
+            'subaccount': self._subaccount_name}})
         self._logged_in = True
 
     def _subscribe(self, subscription: Dict) -> None:
@@ -160,7 +164,7 @@ class FtxWebsocketClient(WebsocketManager):
             self._subscribe(subscription)
         return list(self._fills.copy())
 
-    def get_orders(self) -> Dict[int, Dict]:
+    def get_orders(self, ) -> Dict[int, Dict]:
         if not self._logged_in:
             self._login()
         subscription = {'channel': 'orders'}
@@ -173,6 +177,12 @@ class FtxWebsocketClient(WebsocketManager):
         if subscription not in self._subscriptions:
             self._subscribe(subscription)
         return list(self._trades[market].copy())
+
+    def get_markets(self) -> List[Dict]:
+        subscription = {'channel': 'markets'}
+        if subscription not in self._subscriptions:
+            self._subscribe(subscription)
+        return list(self._markets.copy())
 
     def get_orderbook(self, market: str) -> Dict[str, List[Tuple[float, float]]]:
         subscription = {'channel': 'orderbook', 'market': market}
@@ -244,11 +254,17 @@ class FtxWebsocketClient(WebsocketManager):
         self._tickers[message['market']] = message['data']
 
     def _handle_fills_message(self, message: Dict) -> None:
-        self._fills.append(message['data'])
+        data = deepcopy(message['data'])
+        data['msg_time'] = int(datetime.now().timestamp())
+        self._fills.append(data)
 
     def _handle_orders_message(self, message: Dict) -> None:
-        data = message['data']
+        data = deepcopy(message['data'])
+        data['msg_time'] = int(datetime.now().timestamp())
         self._orders.update({data['id']: data})
+
+    def _handle_markets_message(self, message: Dict) -> None:
+        self._markets = message['data']
 
     def _on_message(self, ws, raw_message: str) -> None:
         message = json.loads(raw_message)
@@ -272,3 +288,5 @@ class FtxWebsocketClient(WebsocketManager):
             self._handle_fills_message(message)
         elif channel == 'orders':
             self._handle_orders_message(message)
+        elif channel == 'markets':
+            self._handle_markets_message(message)

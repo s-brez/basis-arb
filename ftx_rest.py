@@ -126,19 +126,6 @@ class FtxRestClient:
     def place_order(self, market: str, side: str, price: float, size: float, type: str = 'limit',
                     reduce_only: bool = False, ioc: bool = False, post_only: bool = False,
                     client_id: str = None, reject_after_ts: float = None) -> dict:
-        # order = {
-        #     'market': market,
-        #     'side': side,
-        #     'price': price,
-        #     'size': size,
-        #     'type': type,
-        #     'reduceOnly': reduce_only,
-        #     'ioc': ioc,
-        #     'postOnly': post_only,
-        #     'clientId': client_id,
-        #     'rejectAfterTs': reject_after_ts}
-
-        # print(json.dumps(order, indent=2))
 
         return self._post('orders', {
             'market': market,
@@ -227,7 +214,8 @@ class FtxRestClient:
 
     # Does not show closed positions
     def get_positions(self, show_avg_price: bool = False) -> dict:
-        return {p['future']: p for p in self._get('positions', {'showAvgPrice': show_avg_price}) if p['size'] > 0 or p['size'] < 0}
+        return {p['future']: p for p in self._get('positions', {'showAvgPrice': show_avg_price}) if p['size'] > 0 }
+        # return {p['future']: p for p in self._get('positions', {'showAvgPrice': show_avg_price})}
 
     def get_position(self, name: str, show_avg_price: bool = False) -> dict:
         return next(filter(lambda x: x['future'] == name, self.get_positions(show_avg_price)), None)

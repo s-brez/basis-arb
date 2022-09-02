@@ -261,6 +261,7 @@ class FtxWebsocketClient(WebsocketManager):
     def _handle_orders_message(self, message: Dict) -> None:
         data = deepcopy(message['data'])
         data['msg_time'] = time.time_ns()
+        # print("WS MESSAGE AT:", str(data['msg_time']), message)
         self._orders.update({data['id']: data})
 
     def _handle_markets_message(self, message: Dict) -> None:
@@ -268,7 +269,6 @@ class FtxWebsocketClient(WebsocketManager):
 
     def _on_message(self, ws, raw_message: str) -> None:
         message = json.loads(raw_message)
-        print(message)
         message_type = message['type']
         if message_type in {'subscribed', 'unsubscribed'}:
             return

@@ -11,19 +11,19 @@ import sys
 
 MARKET = ("BTC/USD", "BTC-PERP", 0.0001)    # (spot, perp, min order)
 SUBACCOUNT = "SpotPerpAlgo"                 # FTX subaccount name
-BASIS_THRESHOLD = 0                         # Lowest % basis that qualifies for an entry
+DEFAULT_BASIS_THRESHOLD = 0.001             # Lowest % basis that qualifies for an entry
 ORDERS_PER_SIDE = 5                         # Number of staggered orders used to reach max size when opening a position
-MAX_OPEN_SIZE = 200                         # Maximum aggregate position size (all positions)
+MAX_OPEN_SIZE = 30                          # Maximum aggregate position size (all positions)
 APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value
 
 # Stop adding to positions once total open size reaches this value
 SIZE_LIMIT = (MAX_OPEN_SIZE / ORDERS_PER_SIDE) * (ORDERS_PER_SIDE - 1)
 
 
-def get_total_open_size(positions: dict, last_price_spot) -> float:
+def get_total_open_size(positions: dict) -> float:
     size = 0
     for p in positions.values():
-        size += p['size'] * last_price_spot if p['type'] == 'spot' else p['size']
+        size += p['size'] * p['entryPrice']
     return size
 
 
@@ -76,8 +76,11 @@ def run():
     positions, orders = {}, {}
     last_update_time = defaultdict(int)
     should_run, should_update = True, False
-    should_add_to_position = False
     waiting_for_fill = False
+    at_max_size = False
+    should_add_to_position = False
+    should_unwind_position = False
+    should_hedge = None
 
     while(should_run):
         if ws and rest:
@@ -114,28 +117,31 @@ def run():
                         # Cancellation
                         elif order_updates[oId]['status'] == 'closed' and order_updates[oId]['filledSize'] == 0.0:
                             try:
-                                print("Cancelled an existing order.")
                                 last_update_time[oId] = order_updates[oId]['msg_time']
                                 del orders[oId]
+                                print("Cancelled an existing order.")
                             except KeyError:
-                                print("Warning: Cancellation of unknown order detected. Manually verify positions, orders and exposure are safe. Close all positions and orders and restart program.")
                                 last_update_time[oId] = order_updates[oId]['msg_time']
+                                raise Exception("Warning: Unexpected cancellation detected. Rate limits for limit orders may have been exceeded. Manually verify positions, orders and exposure are safe. Close all positions and orders and restart program. If unexpected limit order cancellation persists wait 1 hour before retrying.")
                             waiting_for_fill = False
 
                         # Complete fill
                         elif order_updates[oId]['status'] == 'closed' and order_updates[oId]['size'] == order_updates[oId]['filledSize']:
 
+                            print(order_updates[oId])
+
+                            if order_updates[oId]['clientId'] == "hedge":
+                                should_hedge = None
+
                             # Balance against existing position
-                            should_hedge = False
                             ticker = order_updates[oId]['market']
                             if ticker in positions.keys():
                                 if order_updates[oId]['side'] == positions[ticker]['side']:
                                     print("Increasing existing position size")
                                     positions[ticker]['size'] += order_updates[oId]['size']
-                                    should_hedge = True
 
                                 else:
-                                    print("Removing existing postion")
+                                    print("Decreasing existing postion")
                                     positions[ticker]['size'] -= order_updates[oId]['size']
                                     if positions[ticker]['size'] == 0.0:
                                         del positions[ticker]
@@ -143,11 +149,11 @@ def run():
 
                             # Create new position record if none exists
                             else:
-                                print("creating new position")
                                 instrument_type = 'spot' if ticker == MARKET[0] else "perp"
-                                positions[ticker] = {'future': ticker, 'type': instrument_type, 'size': order_updates[oId]['filledSize'], 'side': order_updates[oId]['side'], 'entryPrice': order_updates[oId]['avgFillPrice']}
+                                print("creating new", instrument_type, "position")
+                                positions[ticker] = {'ticker': ticker, 'type': instrument_type, 'size': order_updates[oId]['filledSize'], 'side': order_updates[oId]['side'], 'entryPrice': order_updates[oId]['avgFillPrice']}
                                 last_update_time[oId] = order_updates[oId]['msg_time']
-                                should_hedge = True
+                                should_hedge = order_updates[oId]
 
                             try:
                                 del orders[oId]
@@ -155,16 +161,12 @@ def run():
                             except KeyError:
                                 pass
 
-                            # If this was a spot fill send a perp market order and vice versa
-                            if should_hedge:
-                                pass
-
                             waiting_for_fill = False
 
                     should_update = False
 
             # -----------------------------------------------------------------
-            # 3. Action price and funding changes
+            # 3. Monitor price and funding changes
 
             # Refresh funding every 5 min
             # ts = int(datetime.now().timestamp())
@@ -180,26 +182,30 @@ def run():
             spot_ask, spot_bid = ob_spot['asks'][0], ob_spot['bids'][0]
             perp_ask, perp_bid = ob_perp['asks'][0], ob_perp['bids'][0]
             last_price_spot, last_price_perp = ws.get_ticker(MARKET[0])['last'], ws.get_ticker(MARKET[1])['last']
-            if last_price_perp > last_price_spot:  # Short perp if funding positive and perp above spot.
+            if last_price_perp > last_price_spot:
                 basis = round(((perp_ask[0] - spot_bid[0]) / ((perp_ask[0] + spot_bid[0]) / 2)) * 100, 5)
-                print("perp is above spot")
-            else:                                  # Long perp if funding negative and perp below spot.
+                perp_above_spot = True
+                # print("perp is above spot")
+            else:
                 basis = round(((spot_ask[0] - perp_bid[0]) / ((spot_ask[0] + perp_bid[0]) / 2)) * 100, 5)
-                print("spot is above perp")
+                perp_above_spot = False
+                # print("spot is above perp")
 
-            # Take action according to basis and position/order state
-            total_open_size = get_total_open_size(positions, last_price_spot)
+            total_open_size = get_total_open_size(positions)
             position_count = len(positions)
             order_count = len(orders)
+            basis_threshold = DEFAULT_BASIS_THRESHOLD if position_count == 0 else DEFAULT_BASIS_THRESHOLD * 0.5
 
             print("waiting_for_fill:", waiting_for_fill)
             print("should_add_to_position:", should_add_to_position)
-            print("total open size:", total_open_size)
-            print("size limit:", SIZE_LIMIT)
+            hedge_message = True if should_hedge else False
+            print("should_hedge:", hedge_message)
+            # print("total open size:", total_open_size)
+            # print("size limit:", SIZE_LIMIT)
 
-            if not waiting_for_fill:
+            if not waiting_for_fill and not at_max_size and not should_hedge:
 
-                if basis >= BASIS_THRESHOLD:
+                if basis >= basis_threshold:
 
                     # No existing positions or open orders
                     if position_count == 0 and order_count == 0:
@@ -209,28 +215,54 @@ def run():
                     elif position_count > 0 and order_count == 0 and total_open_size <= SIZE_LIMIT:
                         should_add_to_position = True
 
-                    # No existing positions, open orders and under max size limit
-                    elif position_count == 0 and order_count > 0:
-                        should_add_to_position = False
+                    # Short condition: perp funding positive and perp above spot
+                    if perp_above_spot and funding > 0:
+                        side = "sell"
+                        price = ws.get_orderbook(MARKET[1])['asks'][1][0]
 
+                    # Long condition: perp funding negative and perp below spot
+                    elif not perp_above_spot and funding < 0:
+                        side = "buy"
+                        price = ws.get_orderbook(MARKET[1])['bids'][1][0]
+
+                    else:
+                        should_add_to_position = False
                 else:
                     should_add_to_position = False
 
+                # Enter perp first, hedge will be placed in reaction to this order filling.
                 if should_add_to_position:
-                    if total_open_size <= MAX_OPEN_SIZE - (MAX_OPEN_SIZE / 5):
-                        print()
+                    base_size = MAX_OPEN_SIZE / ORDERS_PER_SIDE / 2 / last_price_perp
+                    size = round(MARKET[2] * round(float(base_size) / MARKET[2]), 4)
+                    print("Placing new perp entry:", size, side)
+                    rest.place_order(MARKET[1], side, price, size, "limit", False, False, False, None, None)
+                    should_add_to_position = False
+                    waiting_for_fill = True
 
-                    # Partial position and open order: wait for the open order to fill.
-                    if position_count > 0 and order_count > 0:
-                        pass
-
-            # Actions to take when waiting for fill
+            # TODO: monitor price movement whilst waiting for fills
             else:
                 pass
 
-            # Exit an open position if perp funding unfavourable and APR threshold reached
-            if True:
-                pass
+            # Place a spot hedge once perp fill detected.
+            if should_hedge:
+
+                if basis >= basis_threshold:
+
+                    print("Hedging new perp exposure.")
+
+                    # side = "sell" if should_hedge['side'] == "buy" else "buy"
+                    # price = ws.get_orderbook(MARKET[0])['asks'][1][0] if side == 'sell' else ws.get_orderbook(MARKET[0])['bids'][1][0]
+                    # size = should_hedge['filledSize']
+
+
+
+                    # type = 'limit'
+                    # reduce_only = False
+                    # ioc = False
+                    # post_only = False
+                    # client_id = None
+                    # reject_after_ts = None
+                    # print("Order placement response:", rest.place_order(MARKET[0], side, price, size, type, reduce_only, ioc, post_only, client_id, reject_after_ts))
 
             print("----------------- " + MARKET[0] + ":" + MARKET[1] + " -----------------")
             print("Spot margin borrow APR:                   ", borrow * 8760)
@@ -251,19 +283,6 @@ def run():
                     # print(f"{o['market']}     {o['side']}       {o['size']}    {o['price']}")
 
             print("\n\n")
-            # SPOT SIZE IS DENOTED IN BTC NOT USD! IMPORTANT
-            # market = "BTC/USD"
-            # side = "sell"
-            # price = spot_ask[0] * 1.0005
-            # size = 0.0001
-            # type = 'limit'
-            # reduce_only = False
-            # ioc = False
-            # post_only = False
-            # client_id = None
-            # reject_after_ts = None
-            # print(json.dumps(
-            #     rest.place_order(market, side, price, size, type, reduce_only, ioc, post_only, client_id, reject_after_ts), indent=2))
 
             # market = "BTC-PERP"
             # side = "sell"

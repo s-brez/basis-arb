@@ -17,7 +17,7 @@ SUBACCOUNT = "SpotPerpAlgo"                 # FTX subaccount name
 ORDERS_PER_SIDE = 3                         # Number of staggered orders used to reach max size when opening a position
 ACCOUNT_SIZE = 120                          # Maximum combines position size for both instruments
 APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value
-MOVE_ORDER_THRESHOLD = 5                    # Move a limit order to follow price if it moves this many units away from last price
+MOVE_ORDER_THRESHOLD = 2                    # Move a limit order to follow price if it moves this many OB levels away from last price
 
 
 # Return total size of all positions
@@ -296,7 +296,7 @@ def run():
             # 4. Move open orders to follow price
             # -----------------------------------------------------------------
 
-            # Move open limit order to OB step 2 if order price is more than MOVE_ORDER_THRESHOLD OB steps from last price.
+            # Move open limit order to OB level 2 if order price is more than MOVE_ORDER_THRESHOLD levels from last price.
             for o in orders.values():
                 entry_price = o['price']
                 last_price = last_price_perp if o['market'] == MARKET[1] else last_price_spot

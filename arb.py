@@ -305,7 +305,7 @@ def run():
                 ob_step = abs(fmean(np.diff([quote[0] for quote in ob[0:MOVE_ORDER_THRESHOLD]])))
                 if abs(entry_price - last_price) > ob_step * MOVE_ORDER_THRESHOLD:
                     print("moving existing limit order")
-                    rest.place_order(o['id'], None, new_price, None, None)
+                    rest.modify_order(o['id'], None, new_price, None, None)
 
             print("----------------- " + MARKET[0] + ":" + MARKET[1] + " -----------------")
             print("Spot margin borrow APR:                   ", round(borrow * 8760, 5))

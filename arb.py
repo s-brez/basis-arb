@@ -14,17 +14,20 @@ import os
 MARKET = ("BTC/USD", "BTC-PERP", 0.0001)    # (spot, perp, min order)
 DEFAULT_BASIS_THRESHOLD = 0.001             # Lowest % basis that qualifies for an entry
 SUBACCOUNT = "SpotPerpAlgo"                 # FTX subaccount name
+ACCOUNT_SIZE = 130                          # Maximum combined size for both positions
 ORDERS_PER_SIDE = 3                         # Number of staggered orders used to reach max size when opening a position
-ACCOUNT_SIZE = 130                          # Maximum combines position size for both instruments
+DEFAULT_RISK_PER_ENTRY = 2                  # Percentage of account to risk on a single entry
+MAX_DRAWDOWN = 15                           # Percentage of account size loss at which to stop trading.
 APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value
-MOVE_ORDER_THRESHOLD = 2                    # Move a limit order to follow price if it moves this many OB levels away from last price
+MOVE_ORDER_THRESHOLD = 3                    # Move a limit order to follow price if it moves this many OB levels away from last price
 
 
 # Return total size of all positions
 def get_total_open_size(positions: dict) -> float:
     size = 0
-    for p in positions.values():
-        size += p['size'] * p['avgEntryPrice']
+    if positions:
+        for p in positions.values():
+            size += p['size'] * p['avgEntryPrice']
     return size
 
 
@@ -102,10 +105,10 @@ def run():
     fill_count = 0
     waiting_for_fill = False
     at_max_size = False
-    should_add_to_position = False
-    should_unwind_position = False
     should_hedge = None
     unequal_exposure = False
+    should_add_to_positions, should_unwind_positions = False, False
+    should_reduce_spot, should_reduce_perp = False, False
 
     while(should_run):
         if ws and rest:
@@ -131,7 +134,7 @@ def run():
 
                     # Match order updates to action case
                     if should_update:
-                        print('update message to be actioned: ', order_updates[oId])
+                        # print('update message to be actioned: ', order_updates[oId])
 
                         # Placement
                         if order_updates[oId]['status'] == 'new' and order_updates[oId]['filledSize'] == 0.0:
@@ -162,7 +165,7 @@ def run():
 
                                 if order_updates[oId]['side'] == positions[ticker]['side']:
                                     print("Increasing existing position")
-                                    positions[ticker]['size'] += order_updates[oId]['size']
+                                    positions[ticker]['size'] = round(positions[ticker]['size'] + order_updates[oId]['size'], 4)
                                     positions[ticker]['fillCount'] += 1
                                     w_pos = (positions[ticker]['fillCount'] - 1) / positions[ticker]['fillCount']
                                     w_new = 1 / positions[ticker]['fillCount']
@@ -171,7 +174,8 @@ def run():
 
                                 else:
                                     print("Decreasing existing postion")
-                                    positions[ticker]['size'] -= order_updates[oId]['size']
+                                    positions[ticker]['size'] = round(positions[ticker]['size'] - order_updates[oId]['size'], 4)
+                                    positions[ticker]['fillCount'] -= 1
                                     if positions[ticker]['size'] == 0.0:
                                         del positions[ticker]
 
@@ -222,12 +226,20 @@ def run():
             at_max_size = False if total_open_size < ACCOUNT_SIZE else True
             if at_max_size:
                 should_hedge = None
-                should_add_to_position = False
+                should_add_to_positions = False
+                waiting_for_fill = False
+
+            # debug use only - this needs to be replaced with proper exit scenarios
+            if fill_count == ORDERS_PER_SIDE * 2 and not waiting_for_fill and order_count == 0 and not should_unwind_positions:
+                print("-------------------------------------------------------")
+                print("STARTING UNWIND")
+                print("-------------------------------------------------------")
+                should_unwind_positions = True
                 waiting_for_fill = False
 
             print("waiting_for_fill:", waiting_for_fill)
-            print("should_add_to_position:", should_add_to_position)
-            print("should_unwind_position:", should_unwind_position)
+            print("should_add_to_positions:", should_add_to_positions)
+            print("should_unwind_positions:", should_unwind_positions)
             hedge_message = True if should_hedge else False
             print("should_hedge:", hedge_message)
             print("total open size:", total_open_size)
@@ -235,7 +247,8 @@ def run():
             print("at_max_size:", at_max_size)
             print("unequal_exposure:", unequal_exposure)
 
-            if not should_unwind_position:
+            # Attempt to add to positions
+            if not should_unwind_positions:
 
                 if not waiting_for_fill:
 
@@ -244,11 +257,11 @@ def run():
 
                             # No existing positions or open orders
                             if position_count == 0 and order_count == 0:
-                                should_add_to_position = True
+                                should_add_to_positions = True
 
                             # Existing positions, no open orders and under max size limit
                             elif position_count > 0 and order_count == 0 and total_open_size <= ACCOUNT_SIZE and fill_count < ORDERS_PER_SIDE * 2:
-                                should_add_to_position = True
+                                should_add_to_positions = True
 
                             # Short condition: perp funding positive and perp above spot
                             if perp_above_spot and funding > 0:
@@ -260,17 +273,17 @@ def run():
                                 side = "buy"
                                 price = ws.get_orderbook(MARKET[1])['bids'][1][0]
                             else:
-                                should_add_to_position = False
+                                should_add_to_positions = False
                         else:
-                            should_add_to_position = False
+                            should_add_to_positions = False
 
                         # Enter perp first, hedge will be placed in reaction to this order filling.
-                        if should_add_to_position:
+                        if should_add_to_positions:
                             base_size = ACCOUNT_SIZE / ORDERS_PER_SIDE / 2 / last_price_perp
                             size = round(MARKET[2] * round(float(base_size) / MARKET[2]), 4)
                             print("Placing new perp entry:", size, side)
                             rest.place_order(MARKET[1], side, price, size, "limit", False, False, False, None, None)
-                            should_add_to_position = False
+                            should_add_to_positions = False
                             waiting_for_fill = True
 
                     # Place a spot hedge once perp fill detected.
@@ -292,22 +305,45 @@ def run():
                         rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
                 else:
                     pass
+
+            # Unload open positions
             else:
                 if not waiting_for_fill:
-                    if reduce_spot:
+
+                    if positions[MARKET[0]]["fillCount"] > positions[MARKET[1]]["fillCount"]:
+                        should_reduce_spot = True
+                        should_reduce_perp = False
+                    elif positions[MARKET[0]]["fillCount"] < positions[MARKET[1]]["fillCount"]:
+                        should_reduce_spot = False
+                        should_reduce_perp = True
+                    else:
+                        should_reduce_spot = True
+                        should_reduce_perp = True
+
+                    print("should reduce spot:", should_reduce_spot)
+                    print("should reduce perp:", should_reduce_perp)
+
+                    if should_reduce_spot and order_count < 2:
                         print("reduce spot position")
+                        size = positions[MARKET[0]]['size'] / positions[MARKET[0]]['fillCount']
+                        side = 'buy' if positions[MARKET[0]]['side'] == 'sell' else 'sell'
+                        print("Placing spot exit order:", size, side)
+                        rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
+                        waiting_for_fill = True
+                        should_reduce_spot = False
 
-                    elif reduce_perp:
+                    if should_reduce_perp and order_count < 2:
                         print("reduce perp position")
-
-            # debug use only - this needs to be replaced by exit scenarios
-            if fill_count == ORDERS_PER_SIDE * 2:
-                should_unwind_position = True
-                waiting_for_fill = False
-                reduce_spot = True
+                        size = positions[MARKET[1]]['size'] / positions[MARKET[1]]['fillCount']
+                        side = 'sell' if positions[MARKET[1]]['side'] == 'buy' else 'buy'
+                        print(positions[MARKET[1]]['side'])
+                        print("Placing perp exit order:", size, side)
+                        rest.place_order(MARKET[1], side, price, size, "limit", False, False, False, None, None)
+                        waiting_for_fill = True
+                        should_reduce_perp = False
 
             # -----------------------------------------------------------------
-            # 4. Move open orders to follow price
+            # 4. Check stop-loss conditions and move open orders to follow price
             # -----------------------------------------------------------------
 
             # Move open limit order to OB level 2 if order price is more than MOVE_ORDER_THRESHOLD levels from last price.
@@ -317,7 +353,7 @@ def run():
                 ob = ws.get_orderbook(o['market'])['asks'] if side == 'sell' else ws.get_orderbook(o['market'])['bids']
                 new_price = ob[1][0]
                 ob_step = abs(fmean(np.diff([quote[0] for quote in ob[0:MOVE_ORDER_THRESHOLD]])))
-                if abs(entry_price - last_price) > ob_step * MOVE_ORDER_THRESHOLD:
+                if abs(entry_price - last_price) > ob_step * MOVE_ORDER_THRESHOLD and new_price != entry_price:
                     print("moving existing limit order")
                     rest.modify_order(o['id'], None, new_price, None, None)
 

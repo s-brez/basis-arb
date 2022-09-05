@@ -15,7 +15,7 @@ MARKET = ("BTC/USD", "BTC-PERP", 0.0001)    # (spot, perp, min order)
 DEFAULT_BASIS_THRESHOLD = 0.001             # Lowest % basis that qualifies for an entry
 SUBACCOUNT = "SpotPerpAlgo"                 # FTX subaccount name
 ORDERS_PER_SIDE = 3                         # Number of staggered orders used to reach max size when opening a position
-ACCOUNT_SIZE = 120                          # Maximum combines position size for both instruments
+ACCOUNT_SIZE = 130                          # Maximum combines position size for both instruments
 APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value
 MOVE_ORDER_THRESHOLD = 2                    # Move a limit order to follow price if it moves this many OB levels away from last price
 
@@ -120,10 +120,10 @@ def run():
 
                     # Dont action updates older than last_actioned timestamp for a given order id
                     try:
-                        print(order_updates[oId]['msg_time'])
-                        print(last_update_time[oId])
+                        # print(order_updates[oId]['msg_time'])
+                        # print(last_update_time[oId])
                         should_update = True if order_updates[oId]['msg_time'] > last_update_time[oId] else False
-                        print("should update:", should_update)
+                        # print("should update:", should_update)
                     except KeyError:
                         orders[oId] = order_updates[oId]
                         last_update_time[oId] = order_updates[oId]['msg_time']
@@ -227,6 +227,7 @@ def run():
 
             print("waiting_for_fill:", waiting_for_fill)
             print("should_add_to_position:", should_add_to_position)
+            print("should_unwind_position:", should_unwind_position)
             hedge_message = True if should_hedge else False
             print("should_hedge:", hedge_message)
             print("total open size:", total_open_size)
@@ -234,63 +235,76 @@ def run():
             print("at_max_size:", at_max_size)
             print("unequal_exposure:", unequal_exposure)
 
-            if not waiting_for_fill and not should_unwind_position:
+            if not should_unwind_position:
 
-                if not at_max_size and not should_hedge:
-                    if basis >= basis_threshold:
+                if not waiting_for_fill:
 
-                        # No existing positions or open orders
-                        if position_count == 0 and order_count == 0:
-                            should_add_to_position = True
+                    if not at_max_size and not should_hedge:
+                        if basis >= basis_threshold:
 
-                        # Existing positions, no open orders and under max size limit
-                        elif position_count > 0 and order_count == 0 and total_open_size <= ACCOUNT_SIZE and fill_count < ORDERS_PER_SIDE * 2:
-                            should_add_to_position = True
+                            # No existing positions or open orders
+                            if position_count == 0 and order_count == 0:
+                                should_add_to_position = True
 
-                        # Short condition: perp funding positive and perp above spot
-                        if perp_above_spot and funding > 0:
-                            side = "sell"
-                            price = ws.get_orderbook(MARKET[1])['asks'][1][0]
+                            # Existing positions, no open orders and under max size limit
+                            elif position_count > 0 and order_count == 0 and total_open_size <= ACCOUNT_SIZE and fill_count < ORDERS_PER_SIDE * 2:
+                                should_add_to_position = True
 
-                        # Long condition: perp funding negative and perp below spot
-                        elif not perp_above_spot and funding < 0:
-                            side = "buy"
-                            price = ws.get_orderbook(MARKET[1])['bids'][1][0]
+                            # Short condition: perp funding positive and perp above spot
+                            if perp_above_spot and funding > 0:
+                                side = "sell"
+                                price = ws.get_orderbook(MARKET[1])['asks'][1][0]
 
+                            # Long condition: perp funding negative and perp below spot
+                            elif not perp_above_spot and funding < 0:
+                                side = "buy"
+                                price = ws.get_orderbook(MARKET[1])['bids'][1][0]
+                            else:
+                                should_add_to_position = False
                         else:
                             should_add_to_position = False
-                    else:
-                        should_add_to_position = False
 
-                    # Enter perp first, hedge will be placed in reaction to this order filling.
-                    if should_add_to_position:
-                        base_size = ACCOUNT_SIZE / ORDERS_PER_SIDE / 2 / last_price_perp
+                        # Enter perp first, hedge will be placed in reaction to this order filling.
+                        if should_add_to_position:
+                            base_size = ACCOUNT_SIZE / ORDERS_PER_SIDE / 2 / last_price_perp
+                            size = round(MARKET[2] * round(float(base_size) / MARKET[2]), 4)
+                            print("Placing new perp entry:", size, side)
+                            rest.place_order(MARKET[1], side, price, size, "limit", False, False, False, None, None)
+                            should_add_to_position = False
+                            waiting_for_fill = True
+
+                    # Place a spot hedge once perp fill detected.
+                    elif should_hedge:
+                        side = "sell" if should_hedge['side'] == "buy" else "buy"
+                        price = ws.get_orderbook(MARKET[0])['asks'][1][0] if side == 'sell' else ws.get_orderbook(MARKET[0])['bids'][1][0]
+                        size = should_hedge['filledSize']
+                        print("Hedging new perp exposure.", size, side)
+                        rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
+
+                    # Ensure zero net exposure even if it would slightly exceed max size.
+                    elif at_max_size and unequal_exposure:
+                        inst_last = last_price_perp if unequal_exposure[2] == "perp" else last_price_spot
+                        base_size = ACCOUNT_SIZE / ORDERS_PER_SIDE / 2 / inst_last
                         size = round(MARKET[2] * round(float(base_size) / MARKET[2]), 4)
-                        print("Placing new perp entry:", size, side)
-                        rest.place_order(MARKET[1], side, price, size, "limit", False, False, False, None, None)
-                        should_add_to_position = False
-                        waiting_for_fill = True
+                        side = unequal_exposure[1]
+                        price = ws.get_orderbook(MARKET[0])['asks'][1][0] if side == 'sell' else ws.get_orderbook(MARKET[0])['bids'][1][0]
+                        print("Hedging oversize perp exposure.", size, side)
+                        rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
+                else:
+                    pass
+            else:
+                if not waiting_for_fill:
+                    if reduce_spot:
+                        print("reduce spot position")
 
-                # Place a spot hedge once perp fill detected.
-                elif should_hedge:
-                    side = "sell" if should_hedge['side'] == "buy" else "buy"
-                    price = ws.get_orderbook(MARKET[0])['asks'][1][0] if side == 'sell' else ws.get_orderbook(MARKET[0])['bids'][1][0]
-                    size = should_hedge['filledSize']
-                    print("Hedging new perp exposure.", size, side)
-                    rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
+                    elif reduce_perp:
+                        print("reduce perp position")
 
-                # Ensure zero net exposure even if it would slightly exceed max size.
-                elif at_max_size and unequal_exposure:
-                    inst_last = last_price_perp if unequal_exposure[2] == "perp" else last_price_spot
-                    base_size = ACCOUNT_SIZE / ORDERS_PER_SIDE / 2 / inst_last
-                    size = round(MARKET[2] * round(float(base_size) / MARKET[2]), 4)
-                    side = unequal_exposure[1]
-                    price = ws.get_orderbook(MARKET[0])['asks'][1][0] if side == 'sell' else ws.get_orderbook(MARKET[0])['bids'][1][0]
-                    print("Hedging oversize perp exposure.", size, side)
-                    rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
-
-            elif should_unwind_position:
-                pass
+            # debug use only - this needs to be replaced by exit scenarios
+            if fill_count == ORDERS_PER_SIDE * 2:
+                should_unwind_position = True
+                waiting_for_fill = False
+                reduce_spot = True
 
             # -----------------------------------------------------------------
             # 4. Move open orders to follow price

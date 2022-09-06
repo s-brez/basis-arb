@@ -6,21 +6,22 @@ from statistics import fmean
 from datetime import datetime
 from time import sleep
 import numpy as np
-import json
 import sys
 import os
 
 
 MARKET = ("BTC/USD", "BTC-PERP", 0.0001)    # (spot, perp, min order)
-DEFAULT_BASIS_THRESHOLD = 0.001             # Lowest % basis that qualifies for an entry
 SUBACCOUNT = "SpotPerpAlgo"                 # FTX subaccount name
-ACCOUNT_SIZE = 130                          # Maximum combined size for both positions
-ORDERS_PER_SIDE = 3                         # Number of staggered orders used to reach max size when opening a position
 DEFAULT_RISK_PER_ENTRY = 2                  # Percentage of account to risk on a single entry
 MAX_DRAWDOWN = 15                           # Percentage of account size loss at which to stop trading.
+
+DEFAULT_BASIS_THRESHOLD = 0.005             # Smallest percentage basis that qualifies for an entry
+BASIS_FLOOR = 0.005                         # Convergence point - if basis reaches this or lower convergence is deemed to have ocurred.
+MARGIN_FOR_ENTRY = 0.5                      # Allowable reduction from initial basis for subsequent entries. 
+ACCOUNT_SIZE = 130                          # Maximum combined size for both positions
+ORDERS_PER_SIDE = 3                         # Number of staggered orders used to reach max size when opening a position
 APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value
 MOVE_ORDER_THRESHOLD = 3                    # Move a limit order to follow price if it moves this many OB levels away from last price
-
 
 # Return total size of all positions
 def get_total_open_size(positions: dict) -> float:
@@ -38,7 +39,6 @@ def has_unequal_exposure(positions: dict) -> [str, str, str]:
     if p_list:
         if p_count % 2 == 0:
             must_hedge = [None, None, None]
-            print("p_count % 2 = 0 at has_unequal_exposure()")
             if p_list[0]['fillCount'] > p_list[1]['fillCount'] or p_list[0]['fillCount'] < p_list[1]['fillCount']:
                 must_hedge[0] = p_list[0]['ticker'] if p_list[0]['fillCount'] > p_list[1]['fillCount'] else p_list[1]['ticker']
                 must_hedge[1] = p_list[1]['side'] if p_list[0]['fillCount'] > p_list[1]['fillCount'] else p_list[0]['side']
@@ -46,7 +46,6 @@ def has_unequal_exposure(positions: dict) -> [str, str, str]:
             else:
                 must_hedge = None
         elif p_count == 1:
-            print("p_count = 1 at has_unequal_exposure()")
             must_hedge = [None, None, None]
             must_hedge[0] = MARKET[1] if p_list[0]['ticker'] == MARKET[0] else MARKET[0]
             must_hedge[1] = 'buy' if p_list[0]['side'] == 'sell' else 'sell'
@@ -107,6 +106,7 @@ def run():
     positions, orders = {}, {}
     last_update_time = defaultdict(int)
     should_run, should_update = True, False
+    basis, start_basis = None, None
     fill_count = 0
     waiting_for_fill = False
     at_max_size = False
@@ -161,6 +161,10 @@ def run():
 
                         # Complete fill
                         elif order_updates[oId]['status'] == 'closed' and order_updates[oId]['size'] == order_updates[oId]['filledSize']:
+
+                            # Save initial basis, this will be referenced when determine exit conditions.
+                            if not start_basis:
+                                start_basis = basis
 
                             # Balance against existing position
                             ticker = order_updates[oId]['market']
@@ -226,7 +230,7 @@ def run():
             total_open_size = get_total_open_size(positions)
             position_count = len(positions)
             order_count = len(orders)
-            basis_threshold = DEFAULT_BASIS_THRESHOLD if position_count == 0 else DEFAULT_BASIS_THRESHOLD * 0.5
+            basis_threshold = DEFAULT_BASIS_THRESHOLD if position_count == 0 else DEFAULT_BASIS_THRESHOLD * MARGIN_FOR_ENTRY
 
             at_max_size = False if total_open_size < ACCOUNT_SIZE else True
             if at_max_size:
@@ -234,12 +238,32 @@ def run():
                 should_add_to_positions = False
                 waiting_for_fill = False
 
-            # debug use only - this needs to be replaced with proper exit scenarios
+            # Exit criteria 1: positioned, basis converges.
+            # if position_count == 2 and basis <= BASIS_FLOOR:
+            #     print("-------------------------------------------------------")
+            #     print("STARTING UNWIND")
+            #     print("-------------------------------------------------------")
+            #     should_unwind_positions = True
+            #     should_add_to_positions = False
+            #     waiting_for_fill = False
+
+            # Exit criteria 2: positioned, basis valid, but APR heavily not in favour
+            # if position_count == 2 and basis >= basis_threshold:
+            #     if (positions[MARKET[1]]['side'] == 'buy' and funding > 0 and abs(funding) >= APR_EXIT_THRESHOLD) or (positions[MARKET[1]]['side'] == 'sell' and funding < 0 and abs(funding) >= APR_EXIT_THRESHOLD):
+            #         print("-------------------------------------------------------")
+            #         print("STARTING UNWIND")
+            #         print("-------------------------------------------------------")
+            #         should_unwind_positions = True
+            #         should_add_to_positions = False
+            #         waiting_for_fill = False
+
+            # Debug only - this will trigger position unwind once max size is reached.
             if fill_count == ORDERS_PER_SIDE * 2 and not waiting_for_fill and order_count == 0 and not should_unwind_positions:
                 print("-------------------------------------------------------")
                 print("STARTING UNWIND")
                 print("-------------------------------------------------------")
                 should_unwind_positions = True
+                should_add_to_positions = False
                 waiting_for_fill = False
 
             print("waiting_for_fill:", waiting_for_fill)
@@ -316,55 +340,73 @@ def run():
             else:
                 if not waiting_for_fill:
 
-                    # Place orders on both sides if exposure is balanced
-                    if order_count == 0 and positions[MARKET[0]]["fillCount"] == positions[MARKET[1]]["fillCount"]:
-                        should_reduce_spot = True
-                        should_reduce_perp = True
+                    if position_count > 0:
 
-                    # Place one order on the side with greater exposure
-                    elif order_count == 1:
-
+                        # Place exit orders on both sides if exposure is balanced
                         try:
-                            # If spot position larger than perp
-                            if positions[MARKET[0]]["fillCount"] > positions[MARKET[1]]["fillCount"]:
+                            if order_count == 0 and positions[MARKET[0]]["fillCount"] == positions[MARKET[1]]["fillCount"]:
                                 should_reduce_spot = True
-                                should_reduce_perp = False
-
-                            # If perp position larger than spot
-                            elif positions[MARKET[0]]["fillCount"] < positions[MARKET[1]]["fillCount"]:
-                                should_reduce_spot = False
                                 should_reduce_perp = True
-                        except KeyError as ke:
-                            print("Close opposite of this;", ke)
-                            should_unwind_positions = False
+
+                            # Place one order on the side with greater exposure
+                            elif order_count == 1:
+
+                                try:
+                                    # If spot position larger than perp
+                                    if positions[MARKET[0]]["fillCount"] > positions[MARKET[1]]["fillCount"]:
+                                        should_reduce_spot = True
+                                        should_reduce_perp = False
+
+                                    # If perp position larger than spot
+                                    elif positions[MARKET[0]]["fillCount"] < positions[MARKET[1]]["fillCount"]:
+                                        should_reduce_spot = False
+                                        should_reduce_perp = True
+
+                                except KeyError as missing_ticker:
+                                    if MARKET[0] == missing_ticker:
+                                        should_reduce_perp = True
+                                        should_reduce_spot = False
+                                    else:
+                                        should_reduce_perp = False
+                                        should_reduce_spot = True
+
+                            # Do nothing if orders open for both positions, wait for fills on either side
+                            elif order_count == 2:
+                                waiting_for_fill = True
+
+                            print("should reduce spot:", should_reduce_spot)
+                            print("should reduce perp:", should_reduce_perp)
+
+                        except KeyError as missing_ticker:
+                            if MARKET[0] == missing_ticker:
+                                should_reduce_perp = True
+                                should_reduce_spot = False
+                            else:
+                                should_reduce_perp = False
+                                should_reduce_spot = True
+
+                        if should_reduce_spot:
+                            print("reduce spot position")
+                            size = positions[MARKET[0]]['size'] / positions[MARKET[0]]['fillCount']
+                            side = 'buy' if positions[MARKET[0]]['side'] == 'sell' else 'sell'
+                            print("Placing spot exit order:", size, side)
+                            rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
+                            waiting_for_fill = True
                             should_reduce_spot = False
+
+                        if should_reduce_perp:
+                            print("reduce perp position")
+                            size = positions[MARKET[1]]['size'] / positions[MARKET[1]]['fillCount']
+                            side = 'sell' if positions[MARKET[1]]['side'] == 'buy' else 'buy'
+                            print(positions[MARKET[1]]['side'])
+                            print("Placing perp exit order:", size, side)
+                            rest.place_order(MARKET[1], side, price, size, "limit", False, False, False, None, None)
+                            waiting_for_fill = True
                             should_reduce_perp = False
 
-                    # Do nothing if orders open for both positions, wait for fills on either side
-                    elif order_count == 2:
-                        waiting_for_fill = True
-
-                    print("should reduce spot:", should_reduce_spot)
-                    print("should reduce perp:", should_reduce_perp)
-
-                    if should_reduce_spot:
-                        print("reduce spot position")
-                        size = positions[MARKET[0]]['size'] / positions[MARKET[0]]['fillCount']
-                        side = 'buy' if positions[MARKET[0]]['side'] == 'sell' else 'sell'
-                        print("Placing spot exit order:", size, side)
-                        rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
-                        waiting_for_fill = True
-                        should_reduce_spot = False
-
-                    if should_reduce_perp:
-                        print("reduce perp position")
-                        size = positions[MARKET[1]]['size'] / positions[MARKET[1]]['fillCount']
-                        side = 'sell' if positions[MARKET[1]]['side'] == 'buy' else 'buy'
-                        print(positions[MARKET[1]]['side'])
-                        print("Placing perp exit order:", size, side)
-                        rest.place_order(MARKET[1], side, price, size, "limit", False, False, False, None, None)
-                        waiting_for_fill = True
-                        should_reduce_perp = False
+                    else:
+                        print("\n\nTrade complete. Exiting.")
+                        sys.exit(0)
 
             # -----------------------------------------------------------------
             # 4. Check stop-loss conditions and move open orders to follow price

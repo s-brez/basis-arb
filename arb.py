@@ -238,34 +238,35 @@ def run():
                 should_add_to_positions = False
                 waiting_for_fill = False
 
-            # Exit criteria 1: positioned, basis converges.
-            # if position_count == 2:
+            if position_count == 2:
+
+                # # Exit criteria 1: positioned, basis converges.
                 # if (positions[MARKET[1]]['side'] == 'buy' and funding > 0) or (positions[MARKET[1]]['side'] == 'sell' and funding < 0):
-                    # print("-------------------------------------------------------")
-                    # print("STARTING UNWIND")
-                    # print("-------------------------------------------------------")
-                    # should_unwind_positions = True
-                    # should_add_to_positions = False
-                    # waiting_for_fill = False
+                #     print("-------------------------------------------------------")
+                #     print("STARTING UNWIND")
+                #     print("-------------------------------------------------------")
+                #     should_unwind_positions = True
+                #     should_add_to_positions = False
+                #     waiting_for_fill = False
 
-            # Exit criteria 2: positioned, basis valid, but APR heavily not in favour
-            # if position_count == 2 and abs(basis) >= basis_threshold:
-            #     if (positions[MARKET[1]]['side'] == 'buy' and funding > 0 and abs(funding) >= APR_EXIT_THRESHOLD) or (positions[MARKET[1]]['side'] == 'sell' and funding < 0 and abs(funding) >= APR_EXIT_THRESHOLD):
-            #         print("-------------------------------------------------------")
-            #         print("STARTING UNWIND")
-            #         print("-------------------------------------------------------")
-            #         should_unwind_positions = True
-            #         should_add_to_positions = False
-            #         waiting_for_fill = False
+                # # Exit criteria 2: positioned, basis valid, but APR heavily not in favour
+                # if abs(basis) >= basis_threshold:
+                #     if (positions[MARKET[1]]['side'] == 'buy' and funding > 0 and abs(funding) >= APR_EXIT_THRESHOLD) or (positions[MARKET[1]]['side'] == 'sell' and funding < 0 and abs(funding) >= APR_EXIT_THRESHOLD):
+                #         print("-------------------------------------------------------")
+                #         print("STARTING UNWIND")
+                #         print("-------------------------------------------------------")
+                #         should_unwind_positions = True
+                #         should_add_to_positions = False
+                #         waiting_for_fill = False
 
-            # Debug only - this will trigger position unwind once max size is reached.
-            if fill_count == ORDERS_PER_SIDE * 2 and not waiting_for_fill and order_count == 0 and not should_unwind_positions:
-                print("-------------------------------------------------------")
-                print("STARTING UNWIND")
-                print("-------------------------------------------------------")
-                should_unwind_positions = True
-                should_add_to_positions = False
-                waiting_for_fill = False
+                # Debug only - this will trigger position unwind once max size is reached.
+                if fill_count == ORDERS_PER_SIDE * 2 and not waiting_for_fill and order_count == 0 and not should_unwind_positions:
+                    print("-------------------------------------------------------")
+                    print("STARTING UNWIND")
+                    print("-------------------------------------------------------")
+                    should_unwind_positions = True
+                    should_add_to_positions = False
+                    waiting_for_fill = False
 
             print("waiting_for_fill:", waiting_for_fill)
             print("should_add_to_positions:", should_add_to_positions)
@@ -384,7 +385,7 @@ def run():
                                 should_reduce_perp = False
                                 should_reduce_spot = True
 
-                        if should_reduce_spot:
+                        if should_reduce_spot and MARKET[0] not in [o['market'] for o in orders.values()]:
                             print("reduce spot position")
                             size = positions[MARKET[0]]['size'] / positions[MARKET[0]]['fillCount']
                             side = 'buy' if positions[MARKET[0]]['side'] == 'sell' else 'sell'
@@ -393,7 +394,7 @@ def run():
                             waiting_for_fill = True
                             should_reduce_spot = False
 
-                        if should_reduce_perp:
+                        if should_reduce_perp and MARKET[1] not in [o['market'] for o in orders.values()]:
                             print("reduce perp position")
                             size = positions[MARKET[1]]['size'] / positions[MARKET[1]]['fillCount']
                             side = 'sell' if positions[MARKET[1]]['side'] == 'buy' else 'buy'
@@ -420,11 +421,12 @@ def run():
                 new_price = ob[1][0]
                 # cutoff_distance =
 
-                # Cancel open limit orders and market close exposed portion of the trade if a fill at current price would exceed stop loss threshold
+                # Calculate stop distance based on the avg entry of the opposing position
                 if exposure:
-                    print(exposure)
-                    # We should calculate stop distance from the avg entry of the opposing positions
-                    print("order to evaluate stop:", o['side'], o['market'])
+                    pass
+                    # print(exposure)
+
+                    # print("order to evaluate stop:", o['side'], o['market'])
 
                 # Move open limit orders closer to price if order price is more than MOVE_ORDER_THRESHOLD levels from last price.
                 if within_risk_limit and abs(o['price'] - last_price) > ob_step * MOVE_ORDER_THRESHOLD and new_price != o['price']:

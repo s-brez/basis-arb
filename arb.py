@@ -10,18 +10,18 @@ import sys
 import os
 
 
-MARKET = ("BTC/USD", "BTC-PERP", 0.0001)    # (spot, perp, min order)
-SUBACCOUNT = "SpotPerpAlgo"                 # FTX subaccount name
-DEFAULT_RISK_PER_ENTRY = 2                  # Percentage of account to risk on a single entry
-MAX_DRAWDOWN = 15                           # Percentage of account size loss at which to stop trading.
+MARKET = ("BTC/USD", "BTC-PERP", 0.0001)    # (spot ticker, perp ticker, min order) Important: spot must be first and perp second
+SUBACCOUNT = "SpotPerpAlgo"                 # Subaccount name
 
 DEFAULT_BASIS_THRESHOLD = 0.005             # Smallest percentage basis that qualifies for an entry
-BASIS_FLOOR = 0.005                         # Convergence point - if basis reaches this or lower convergence is deemed to have ocurred.
-MARGIN_FOR_ENTRY = 0.5                      # Allowable reduction from initial basis for subsequent entries. 
+BASIS_FLOOR = 0.005                         # If basis reaches or goes lower than this, convergence of spot and future is considered to have ocurred
+MARGIN_FOR_ENTRY = 0.5                      # Allowable percentage reduction from initial basis for subsequent entries
 ACCOUNT_SIZE = 130                          # Maximum combined size for both positions
 ORDERS_PER_SIDE = 3                         # Number of staggered orders used to reach max size when opening a position
-APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value
 MOVE_ORDER_THRESHOLD = 3                    # Move a limit order to follow price if it moves this many OB levels away from last price
+BAD_ENTRY_CUTOFF = 2                        # % distance past profitable at which an attempted entry is considered failed.
+APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value
+
 
 # Return total size of all positions
 def get_total_open_size(positions: dict) -> float:
@@ -33,7 +33,7 @@ def get_total_open_size(positions: dict) -> float:
 
 
 # Return ticker and direction needing a size increase to zero out net exposure
-def has_unequal_exposure(positions: dict) -> [str, str, str]:
+def has_exposure(positions: dict) -> [str, str, str]:
     p_list = list(positions.values())
     p_count = len(p_list)
     if p_list:
@@ -111,7 +111,7 @@ def run():
     waiting_for_fill = False
     at_max_size = False
     should_hedge = None
-    unequal_exposure = False
+    exposure = False
     should_add_to_positions, should_unwind_positions = False, False
     should_reduce_spot, should_reduce_perp = False, False
 
@@ -202,7 +202,7 @@ def run():
                             last_update_time[oId] = order_updates[oId]['msg_time']
                             waiting_for_fill = False
                             should_hedge = order_updates[oId] if instrument_type == "perp" else None
-                            unequal_exposure = has_unequal_exposure(positions)
+                            exposure = has_exposure(positions)
 
                     should_update = False
 
@@ -239,16 +239,17 @@ def run():
                 waiting_for_fill = False
 
             # Exit criteria 1: positioned, basis converges.
-            # if position_count == 2 and basis <= BASIS_FLOOR:
-            #     print("-------------------------------------------------------")
-            #     print("STARTING UNWIND")
-            #     print("-------------------------------------------------------")
-            #     should_unwind_positions = True
-            #     should_add_to_positions = False
-            #     waiting_for_fill = False
+            # if position_count == 2:
+                # if (positions[MARKET[1]]['side'] == 'buy' and funding > 0) or (positions[MARKET[1]]['side'] == 'sell' and funding < 0):
+                    # print("-------------------------------------------------------")
+                    # print("STARTING UNWIND")
+                    # print("-------------------------------------------------------")
+                    # should_unwind_positions = True
+                    # should_add_to_positions = False
+                    # waiting_for_fill = False
 
             # Exit criteria 2: positioned, basis valid, but APR heavily not in favour
-            # if position_count == 2 and basis >= basis_threshold:
+            # if position_count == 2 and abs(basis) >= basis_threshold:
             #     if (positions[MARKET[1]]['side'] == 'buy' and funding > 0 and abs(funding) >= APR_EXIT_THRESHOLD) or (positions[MARKET[1]]['side'] == 'sell' and funding < 0 and abs(funding) >= APR_EXIT_THRESHOLD):
             #         print("-------------------------------------------------------")
             #         print("STARTING UNWIND")
@@ -274,7 +275,7 @@ def run():
             print("total open size:", total_open_size)
             print("account size:", ACCOUNT_SIZE)
             print("at_max_size:", at_max_size)
-            print("unequal_exposure:", unequal_exposure)
+            print("exposure:", exposure)
 
             # Attempt to add to positions
             if not should_unwind_positions:
@@ -325,18 +326,16 @@ def run():
                         rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
 
                     # Ensure zero net exposure even if it would slightly exceed max size.
-                    elif at_max_size and unequal_exposure:
-                        inst_last = last_price_perp if unequal_exposure[2] == "perp" else last_price_spot
+                    elif at_max_size and exposure:
+                        inst_last = last_price_perp if exposure[2] == "perp" else last_price_spot
                         base_size = ACCOUNT_SIZE / ORDERS_PER_SIDE / 2 / inst_last
                         size = round(MARKET[2] * round(float(base_size) / MARKET[2]), 4)
-                        side = unequal_exposure[1]
+                        side = exposure[1]
                         price = ws.get_orderbook(MARKET[0])['asks'][1][0] if side == 'sell' else ws.get_orderbook(MARKET[0])['bids'][1][0]
                         print("Hedging oversize perp exposure.", size, side)
                         rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
-                else:
-                    pass
 
-            # Unload open positions
+            # Unwind open positions
             else:
                 if not waiting_for_fill:
 
@@ -412,18 +411,25 @@ def run():
             # 4. Check stop-loss conditions and move open orders to follow price
             # -----------------------------------------------------------------
 
-            # Move open limit orders to OB level 2 if order price is more than MOVE_ORDER_THRESHOLD levels from last price.
+            exposure = has_exposure(positions)
             for o in orders.values():
-                entry_price = o['price']
+                within_risk_limit = True
                 last_price = last_price_perp if o['market'] == MARKET[1] else last_price_spot
                 ob = ws.get_orderbook(o['market'])['asks'] if side == 'sell' else ws.get_orderbook(o['market'])['bids']
-                new_price = ob[1][0]
                 ob_step = abs(fmean(np.diff([quote[0] for quote in ob[0:MOVE_ORDER_THRESHOLD]])))
-                if abs(entry_price - last_price) > ob_step * MOVE_ORDER_THRESHOLD and new_price != entry_price:
+                new_price = ob[1][0]
+                # cutoff_distance =
+
+                # Cancel open limit orders and market close exposed portion of the trade if a fill at current price would exceed stop loss threshold
+                if exposure:
+                    print(exposure)
+                    # We should calculate stop distance from the avg entry of the opposing positions
+                    print("order to evaluate stop:", o['side'], o['market'])
+
+                # Move open limit orders closer to price if order price is more than MOVE_ORDER_THRESHOLD levels from last price.
+                if within_risk_limit and abs(o['price'] - last_price) > ob_step * MOVE_ORDER_THRESHOLD and new_price != o['price']:
                     print("moving existing limit order")
                     rest.modify_order(o['id'], None, new_price, None, None)
-
-            # Stop conditions
 
             print("----------------- " + MARKET[0] + ":" + MARKET[1] + " -----------------")
             print("Spot margin borrow APR:                   ", round(borrow * 8760, 5))

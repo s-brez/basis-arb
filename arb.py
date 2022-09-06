@@ -35,20 +35,25 @@ def get_total_open_size(positions: dict) -> float:
 def has_unequal_exposure(positions: dict) -> [str, str, str]:
     p_list = list(positions.values())
     p_count = len(p_list)
-    if p_count % 2 == 0:
-        must_hedge = [None, None, None]
-        if p_list[0]['fillCount'] > p_list[1]['fillCount'] or p_list[0]['fillCount'] < p_list[1]['fillCount']:
-            must_hedge[0] = p_list[1]['ticker'] if p_list[0]['fillCount'] > p_list[1]['fillCount'] else p_list[0]['ticker']
-            must_hedge[1] = p_list[1]['side'] if p_list[0]['fillCount'] > p_list[1]['fillCount'] else p_list[0]['side']
-            must_hedge[2] = "perp" if p_list[0]['fillCount'] > p_list[1]['fillCount'] else "spot"
-        else:
+    if p_list:
+        if p_count % 2 == 0:
+            must_hedge = [None, None, None]
+            print("p_count % 2 = 0 at has_unequal_exposure()")
+            if p_list[0]['fillCount'] > p_list[1]['fillCount'] or p_list[0]['fillCount'] < p_list[1]['fillCount']:
+                must_hedge[0] = p_list[0]['ticker'] if p_list[0]['fillCount'] > p_list[1]['fillCount'] else p_list[1]['ticker']
+                must_hedge[1] = p_list[1]['side'] if p_list[0]['fillCount'] > p_list[1]['fillCount'] else p_list[0]['side']
+                must_hedge[2] = "perp" if p_list[0]['fillCount'] > p_list[1]['fillCount'] else "spot"
+            else:
+                must_hedge = None
+        elif p_count == 1:
+            print("p_count = 1 at has_unequal_exposure()")
+            must_hedge = [None, None, None]
+            must_hedge[0] = MARKET[1] if p_list[0]['ticker'] == MARKET[0] else MARKET[0]
+            must_hedge[1] = 'buy' if p_list[0]['side'] == 'sell' else 'sell'
+            must_hedge[2] = 'spot' if p_list[0]['type'] == 'perp' else 'perp'
+        elif p_count == 0:
             must_hedge = None
-    elif p_count == 1:
-        must_hedge = [None, None, None]
-        must_hedge[0] = MARKET[1] if p_list[0]['ticker'] == MARKET[0] else MARKET[0]
-        must_hedge[1] = 'buy' if p_list[0]['side'] == 'sell' else 'sell'
-        must_hedge[2] = 'spot' if p_list[0]['type'] == 'perp' else 'perp'
-    elif p_count == 0:
+    else:
         must_hedge = None
     return must_hedge
 
@@ -275,6 +280,7 @@ def run():
                             else:
                                 should_add_to_positions = False
                         else:
+                            print("Basis too small to add to positions")
                             should_add_to_positions = False
 
                         # Enter perp first, hedge will be placed in reaction to this order filling.
@@ -310,20 +316,38 @@ def run():
             else:
                 if not waiting_for_fill:
 
-                    if positions[MARKET[0]]["fillCount"] > positions[MARKET[1]]["fillCount"]:
-                        should_reduce_spot = True
-                        should_reduce_perp = False
-                    elif positions[MARKET[0]]["fillCount"] < positions[MARKET[1]]["fillCount"]:
-                        should_reduce_spot = False
-                        should_reduce_perp = True
-                    else:
+                    # Place orders on both sides if exposure is balanced
+                    if order_count == 0 and positions[MARKET[0]]["fillCount"] == positions[MARKET[1]]["fillCount"]:
                         should_reduce_spot = True
                         should_reduce_perp = True
+
+                    # Place one order on the side with greater exposure
+                    elif order_count == 1:
+
+                        try:
+                            # If spot position larger than perp
+                            if positions[MARKET[0]]["fillCount"] > positions[MARKET[1]]["fillCount"]:
+                                should_reduce_spot = True
+                                should_reduce_perp = False
+
+                            # If perp position larger than spot
+                            elif positions[MARKET[0]]["fillCount"] < positions[MARKET[1]]["fillCount"]:
+                                should_reduce_spot = False
+                                should_reduce_perp = True
+                        except KeyError as ke:
+                            print("Close opposite of this;", ke)
+                            should_unwind_positions = False
+                            should_reduce_spot = False
+                            should_reduce_perp = False
+
+                    # Do nothing if orders open for both positions, wait for fills on either side
+                    elif order_count == 2:
+                        waiting_for_fill = True
 
                     print("should reduce spot:", should_reduce_spot)
                     print("should reduce perp:", should_reduce_perp)
 
-                    if should_reduce_spot and order_count < 2:
+                    if should_reduce_spot:
                         print("reduce spot position")
                         size = positions[MARKET[0]]['size'] / positions[MARKET[0]]['fillCount']
                         side = 'buy' if positions[MARKET[0]]['side'] == 'sell' else 'sell'
@@ -332,7 +356,7 @@ def run():
                         waiting_for_fill = True
                         should_reduce_spot = False
 
-                    if should_reduce_perp and order_count < 2:
+                    if should_reduce_perp:
                         print("reduce perp position")
                         size = positions[MARKET[1]]['size'] / positions[MARKET[1]]['fillCount']
                         side = 'sell' if positions[MARKET[1]]['side'] == 'buy' else 'buy'
@@ -346,7 +370,7 @@ def run():
             # 4. Check stop-loss conditions and move open orders to follow price
             # -----------------------------------------------------------------
 
-            # Move open limit order to OB level 2 if order price is more than MOVE_ORDER_THRESHOLD levels from last price.
+            # Move open limit orders to OB level 2 if order price is more than MOVE_ORDER_THRESHOLD levels from last price.
             for o in orders.values():
                 entry_price = o['price']
                 last_price = last_price_perp if o['market'] == MARKET[1] else last_price_spot
@@ -356,6 +380,8 @@ def run():
                 if abs(entry_price - last_price) > ob_step * MOVE_ORDER_THRESHOLD and new_price != entry_price:
                     print("moving existing limit order")
                     rest.modify_order(o['id'], None, new_price, None, None)
+
+            # Stop conditions
 
             print("----------------- " + MARKET[0] + ":" + MARKET[1] + " -----------------")
             print("Spot margin borrow APR:                   ", round(borrow * 8760, 5))
@@ -410,7 +436,7 @@ def run():
             # print(json.dumps(ws.get_orders(), indent=2))
             # print(rest.get_positions())
 
-            sleep(5)
+            sleep(3)
 
         else:
             if not ws:

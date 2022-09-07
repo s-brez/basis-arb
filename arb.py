@@ -20,11 +20,11 @@ MARGIN_FOR_ENTRY = 0.5                      # Allowable percentage reduction fro
 
 ACCOUNT_SIZE = 130                          # Maximum combined size for both positions
 ORDERS_PER_SIDE = 3                         # Number of staggered orders used to reach max size when opening a position
-QUOTE_INDEX = 1                             # Bid/ask index used to for limit order pricing. 0 means 1st level, 1 means 2nd level and so on.
+QUOTE_INDEX = 1                             # Bid/ask index used for limit order pricing. 0 means 1st level, 1 means 2nd level and so on.
 MOVE_ORDER_THRESHOLD = 2                    # Move a limit order to follow price if it moves this many OB levels away from last price
 
 BAD_ENTRY_CUTOFF = 2                        # % distance past profitable at which an attempted entry is considered failed.
-APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value
+APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value in the wrong direction
 
 DEBUG_OUTPUT = True                         # If True program actions print to console
 
@@ -61,6 +61,15 @@ def has_exposure(positions: dict) -> [str, str, str]:
     else:
         must_hedge = None
     return must_hedge
+
+
+# Return total fills of all positions
+def get_total_fills(positions: dict) -> float:
+    fills = 0
+    if positions:
+        for p in positions.values():
+            fills += p['fillCount']
+    return fills
 
 
 def run():
@@ -234,44 +243,52 @@ def run():
                 above_below_message = "Spot is above Perpetual"
 
             total_open_size = get_total_open_size(positions)
-            position_count = len(positions)
-            order_count = len(orders)
+            position_count, order_count = len(positions), len(orders)
+            total_fills = get_total_fills(positions)
+
             basis_threshold = DEFAULT_BASIS_THRESHOLD if position_count == 0 else DEFAULT_BASIS_THRESHOLD * MARGIN_FOR_ENTRY
 
-            at_max_size = False if total_open_size < ACCOUNT_SIZE else True
+            if total_open_size >= ACCOUNT_SIZE or total_fills == ORDERS_PER_SIDE * 2:
+                at_max_size = True
+            else:
+                at_max_size = False
+
             if at_max_size:
                 should_add_to_positions = False
+                should_increase_spot = False
+                should_increase_perp = False
                 waiting_for_fill = False
 
             if position_count == 2:
 
-                # # Exit criteria 1: positioned, basis converges.
-                # if (positions[MARKET[1]]['side'] == 'buy' and funding > 0) or (positions[MARKET[1]]['side'] == 'sell' and funding < 0):
-                    # print("-------------------------------------------------------")
-                    # print("STARTING UNWIND")
-                    # print("-------------------------------------------------------")
-                    # should_unwind_positions = True
-                    # should_add_to_positions = False
-                    # waiting_for_fill = False
-
-                # # Exit criteria 2: positioned, basis valid, but funding APR worse than acceptable.
-                # if abs(basis) >= basis_threshold:
-                    # if (positions[MARKET[1]]['side'] == 'buy' and funding > 0 and abs(funding) >= APR_EXIT_THRESHOLD) or (positions[MARKET[1]]['side'] == 'sell' and funding < 0 and abs(funding) >= APR_EXIT_THRESHOLD):
-                    #     print("-------------------------------------------------------")
-                    #     print("STARTING UNWIND")
-                    #     print("-------------------------------------------------------")
-                    #     should_unwind_positions = True
-                    #     should_add_to_positions = False
-                    #     waiting_for_fill = False
-
-                # For debug only - this triggers position unwind as soon as max size is reached.
-                if fill_count == ORDERS_PER_SIDE * 2 and not waiting_for_fill and order_count == 0 and not should_unwind_positions:
+                # Exit criteria 1: positioned, basis converges.
+                if (positions[MARKET[1]]['side'] == 'buy' and funding > 0) or (positions[MARKET[1]]['side'] == 'sell' and funding < 0):
                     print("-------------------------------------------------------")
-                    print("STARTING UNWIND")
+                    print("START EXITING POSITIONS")
+                    print("Basis convergence")
                     print("-------------------------------------------------------")
                     should_unwind_positions = True
                     should_add_to_positions = False
                     waiting_for_fill = False
+
+                # Exit criteria 2: positioned, basis valid, but funding APR worse than acceptable.
+                if (positions[MARKET[1]]['side'] == 'buy' and funding > 0 and abs(funding) >= APR_EXIT_THRESHOLD) or (positions[MARKET[1]]['side'] == 'sell' and funding < 0 and abs(funding) >= APR_EXIT_THRESHOLD):
+                    print("-------------------------------------------------------")
+                    print("START EXITING POSITIONS")
+                    print("Unfavourable funding APR")
+                    print("-------------------------------------------------------")
+                    should_unwind_positions = True
+                    should_add_to_positions = False
+                    waiting_for_fill = False
+
+                # For debug only - triggers position unwind as soon as max size is reached.
+                # if fill_count == ORDERS_PER_SIDE * 2 and not waiting_for_fill and order_count == 0 and not should_unwind_positions:
+                    # print("-------------------------------------------------------")
+                    # print("START EXITING POSITIONS")
+                    # print("-------------------------------------------------------")
+                    # should_unwind_positions = True
+                    # should_add_to_positions = False
+                    # waiting_for_fill = False
 
             if DEBUG_OUTPUT:
                 print("waiting_for_fill:", waiting_for_fill)
@@ -283,8 +300,8 @@ def run():
                 print("exposure:", exposure)
 
             # Add to positions
-            if not should_unwind_positions:
-                if not waiting_for_fill and not at_max_size:
+            if not should_unwind_positions and not at_max_size:
+                if not waiting_for_fill:
                     if abs(basis) >= basis_threshold:
                         if (perp_above_spot and funding > 0) or (not perp_above_spot and funding < 0):
                             should_add_to_positions = True
@@ -295,7 +312,7 @@ def run():
                         should_add_to_positions = False
                         print("Basis too small.")
 
-                    if should_add_to_positions:
+                    if should_add_to_positions and not at_max_size:
 
                         # Place limit orders on both sides such that exposure is balanced by the next fill
                         try:
@@ -391,21 +408,8 @@ def run():
                             rest.place_order(MARKET[1], side, price, size, "limit", False, False, False, None, None)
                             should_increase_perp = False
 
-                # Ensure zero net exposure even if it would slightly exceed max size.
-                # elif at_max_size and exposure:
-                    # inst_last = last_price_perp if exposure[2] == "perp" else last_price_spot
-                    # base_size = ACCOUNT_SIZE / ORDERS_PER_SIDE / 2 / inst_last
-                    # size = round(MARKET[2] * round(float(base_size) / MARKET[2]), 4)
-                    # side = exposure[1]
-                    # price = ws.get_orderbook(MARKET[0])['asks'][QUOTE_INDEX][0] if side == 'sell' else ws.get_orderbook(MARKET[0])['bids'][QUOTE_INDEX][0]
-                    # if DEBUG_OUTPUT:
-                    #     print("Hedging oversize perp exposure.", size, side, price)
-                    #     quotes = ws.get_orderbook(MARKET[0])['bids'][0:5] if side == 'buy' else ws.get_orderbook(MARKET[0])['asks'][0:5]
-                    #     print("Quotes 0-5", quotes)
-                    # rest.place_order(MARKET[0], side, price, size, "limit", False, False, False, None, None)
-
             # Unwind open positions
-            else:
+            elif should_unwind_positions:
                 if not waiting_for_fill:
                     if position_count > 0:
 

@@ -6,26 +6,24 @@ from statistics import fmean
 from datetime import datetime
 from time import sleep
 import numpy as np
+import keyboard
 import sys
 import os
 
 
-# MARKET = ("BTC/USD", "BTC-PERP", 0.0001)    # (spot ticker, perp ticker, min size increment) Spot must be first and perp second
-MARKET = ("ETH/USD", "ETH-PERP", 0.001)
 SUBACCOUNT = "SpotPerpAlgo"                 # Subaccount name
-
-DEFAULT_BASIS_THRESHOLD = 0.0005            # Smallest percentage basis that qualifies for an entry
-BASIS_FLOOR = 0.005                         # If basis reaches or goes lower than this, convergence of spot and future price is considered to have ocurred.
-MARGIN_FOR_ENTRY = 0.5                      # Allowable percentage reduction from initial basis for subsequent entries
-
+MARKET = ("BTC/USD", "BTC-PERP", 0.0001)    # (spot ticker, perp ticker, min size increment) Spot must be first and perp second
 ACCOUNT_SIZE = 130                          # Maximum combined size for both positions
 ORDERS_PER_SIDE = 3                         # Number of staggered orders used to reach max size when opening a position
+DEFAULT_BASIS_THRESHOLD = 0.0005            # Smallest percentage basis that qualifies for an entry
+MARGIN_FOR_ENTRY = 0.5                      # Allowable percentage reduction from initial basis for subsequent entries
+
+BASIS_FLOOR = 0.005                         # If basis reaches or goes lower than this, convergence of spot and future price is considered to have ocurred.
+BAD_ENTRY_CUTOFF = 2                        # % distance past profitable at which an attempted entry is considered failed.
+APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value in the wrong direction
 
 QUOTE_INDEX = 1                             # Bid/ask index used for limit order pricing. 0 means 1st level, 1 means 2nd level and so on.
 MOVE_ORDER_THRESHOLD = 2                    # Move a limit order to follow price if it moves this many OB levels away from last price
-
-BAD_ENTRY_CUTOFF = 2                        # % distance past profitable at which an attempted entry is considered failed.
-APR_EXIT_THRESHOLD = 50                     # Exit a position if funding exceeds this value in the wrong direction
 
 DEBUG_OUTPUT = True                         # If True program actions print to console
 
@@ -281,6 +279,17 @@ def run():
                     should_unwind_positions = True
                     should_add_to_positions = False
                     waiting_for_fill = False
+
+                # Exit criteria 3: arbitrary manual exit
+                if keyboard.is_pressed('ctrl+enter'):
+                    print("-------------------------------------------------------")
+                    print("START EXITING POSITIONS")
+                    print("Manual exit signal")
+                    print("-------------------------------------------------------")
+                    should_unwind_positions = True
+                    should_add_to_positions = False
+                    waiting_for_fill = False
+
 
                 # For debug only - triggers position unwind as soon as max size is reached.
                 # if fill_count == ORDERS_PER_SIDE * 2 and not waiting_for_fill and order_count == 0 and not should_unwind_positions:

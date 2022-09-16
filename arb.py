@@ -6,13 +6,15 @@ from statistics import fmean
 from datetime import datetime
 from time import sleep
 import numpy as np
+import subprocess
 import keyboard
+import json
 import sys
 import os
 
 
 SUBACCOUNT = "SpotPerpAlgo"                 # Subaccount name
-MARKET = ("BTC/USD", "BTC-PERP", 0.0001)    # (spot ticker, perp ticker, min size increment) Spot must be first and perp second
+MARKET = ("ETH/USD", "ETH-PERP", 0.001)     # (spot ticker, perp ticker, min size increment) Spot must be first and perp second
 ACCOUNT_SIZE = 130                          # Maximum combined size for both positions
 ORDERS_PER_SIDE = 3                         # Number of staggered orders used to reach max size when opening a position
 DEFAULT_BASIS_THRESHOLD = 0.0005            # Smallest percentage basis that qualifies for an entry
@@ -95,7 +97,10 @@ def run():
         raise ValueError('Target market ticker invalid. Check ticker codes and restart program.')
 
     # Validate account starting state
-    if rest.get_positions() or rest.get_open_orders():
+    positions, orders = rest.get_positions(), rest.get_open_orders()
+    if positions or orders:
+        print(json.dumps(positions, indent=2))
+        print(json.dumps(orders, indent=2))
         error_message = "Existing positions or orders detected. Close all positions, orders and margin borrows, then restart program." \
                         " Ensure margin collateral is denominated in an asset you will not be trading e.g hold Tether if trading BTC spot and BTC perpetual, dont hold BTC or USD."
         raise Exception(error_message)
@@ -117,7 +122,6 @@ def run():
     borrow = round(float([b['estimate'] for b in rest.get_borrow_rates() if b['coin'] == MARKET[0].split('/')[0]][0] * 100), 4)
     funding = round(float(rest.get_funding_rates(MARKET[1])[0]['rate']) * 100, 4)
 
-    positions, orders = {}, {}
     last_update_time = defaultdict(int)
     should_run, should_update = True, False
     basis, start_basis = None, None
@@ -289,7 +293,6 @@ def run():
                     should_unwind_positions = True
                     should_add_to_positions = False
                     waiting_for_fill = False
-
 
                 # For debug only - triggers position unwind as soon as max size is reached.
                 # if fill_count == ORDERS_PER_SIDE * 2 and not waiting_for_fill and order_count == 0 and not should_unwind_positions:
@@ -505,8 +508,9 @@ def run():
                                 if DEBUG_OUTPUT:
                                     print("Position for", already_closed, "already_closed")
                     else:
-                        print("\n\nTrade complete. Terminating.")
-                        sys.exit(0)
+                        print("\nTrade complete. Terminating.")
+                        subprocess.run(["taskkill", "/IM", "python.exe", "/F"])
+                        # sys.exit(0)
 
             # -----------------------------------------------------------------
             # 4. Check stop-loss conditions and move open orders to follow price

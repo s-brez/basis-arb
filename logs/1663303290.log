@@ -1,0 +1,855 @@
+2022-09-16 14:41:32,438 | websocket connected
+2022-09-16 14:41:35,465 | waiting_for_fill: False
+2022-09-16 14:41:35,465 | should_add_to_positions: False
+2022-09-16 14:41:35,465 | should_unwind_positions: False
+2022-09-16 14:41:35,465 | total open size: 0
+2022-09-16 14:41:35,465 | account size: 130
+2022-09-16 14:41:35,465 | at_max_size: False
+2022-09-16 14:41:35,465 | exposure: False
+2022-09-16 14:41:35,465 | should increase spot: True
+2022-09-16 14:41:35,465 | should increase perp: True
+2022-09-16 14:41:35,465 | increase spot position
+2022-09-16 14:41:35,465 | L420: Placing spot entry order:
+2022-09-16 14:41:35,713 | increase perp position
+2022-09-16 14:41:35,713 | L437: Placing perp entry order:
+2022-09-16 14:41:36,175 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:41:36,175 | Spot margin borrow APR:                    8.76
+2022-09-16 14:41:36,175 | Perpetual funding APR:                     -14.016
+2022-09-16 14:41:36,176 | Spot/perp basis %:                         0.06103
+2022-09-16 14:41:36,176 | Spot is above Perpetual
+2022-09-16 14:41:36,176 | 
+Active positions: 0
+2022-09-16 14:41:36,176 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:41:36,176 | 
+2022-09-16 14:41:36,176 | 
+Open orders:  0
+2022-09-16 14:41:36,176 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:41:36,176 | 
+2022-09-16 14:41:40,185 | Created a new order
+2022-09-16 14:41:40,185 | Created a new order
+2022-09-16 14:41:40,185 | waiting_for_fill: True
+2022-09-16 14:41:40,185 | should_add_to_positions: True
+2022-09-16 14:41:40,185 | should_unwind_positions: False
+2022-09-16 14:41:40,185 | total open size: 0
+2022-09-16 14:41:40,185 | account size: 130
+2022-09-16 14:41:40,186 | at_max_size: False
+2022-09-16 14:41:40,186 | exposure: None
+2022-09-16 14:41:40,186 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:41:40,186 | Spot margin borrow APR:                    8.76
+2022-09-16 14:41:40,186 | Perpetual funding APR:                     -14.016
+2022-09-16 14:41:40,186 | Spot/perp basis %:                         0.06103
+2022-09-16 14:41:40,186 | Spot is above Perpetual
+2022-09-16 14:41:40,187 | 
+Active positions: 0
+2022-09-16 14:41:40,187 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:41:40,187 | 
+2022-09-16 14:41:40,187 | 
+Open orders:  2
+2022-09-16 14:41:40,187 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:41:40,187 | ETH/USD     sell           1475.3     0.015    new
+ETH-PERP     buy           1474.2     0.015    new
+
+2022-09-16 14:41:44,191 | creating new perp position
+2022-09-16 14:41:44,191 | waiting_for_fill: False
+2022-09-16 14:41:44,192 | should_add_to_positions: True
+2022-09-16 14:41:44,192 | should_unwind_positions: False
+2022-09-16 14:41:44,192 | total open size: 22.113
+2022-09-16 14:41:44,192 | account size: 130
+2022-09-16 14:41:44,192 | at_max_size: False
+2022-09-16 14:41:44,192 | exposure: ['ETH/USD', 'sell', 'spot']
+2022-09-16 14:41:44,192 | should increase spot: False
+2022-09-16 14:41:44,192 | should increase perp: True
+2022-09-16 14:41:44,192 | increase perp position
+2022-09-16 14:41:44,192 | L437: Placing perp entry order:
+2022-09-16 14:41:44,421 | cutoff price for open order: 1444.7160000000001
+2022-09-16 14:41:44,421 | moving existing limit order
+2022-09-16 14:41:44,898 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:41:44,898 | Spot margin borrow APR:                    8.76
+2022-09-16 14:41:44,898 | Perpetual funding APR:                     -14.016
+2022-09-16 14:41:44,898 | Spot/perp basis %:                         0.05426
+2022-09-16 14:41:44,898 | Spot is above Perpetual
+2022-09-16 14:41:44,899 | 
+Active positions: 1
+2022-09-16 14:41:44,899 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:41:44,899 | ETH-PERP     buy             1474.2       0.015     1
+
+2022-09-16 14:41:44,899 | 
+Open orders:  1
+2022-09-16 14:41:44,899 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:41:44,899 | ETH/USD     sell           1475.3     0.015    new
+
+2022-09-16 14:41:48,910 | Cancelled an existing order
+2022-09-16 14:41:48,910 | Created a new order
+2022-09-16 14:41:48,910 | creating new spot position
+2022-09-16 14:41:49,008 | waiting_for_fill: False
+2022-09-16 14:41:49,008 | should_add_to_positions: True
+2022-09-16 14:41:49,008 | should_unwind_positions: False
+2022-09-16 14:41:49,008 | total open size: 44.235
+2022-09-16 14:41:49,008 | account size: 130
+2022-09-16 14:41:49,008 | at_max_size: False
+2022-09-16 14:41:49,008 | exposure: None
+2022-09-16 14:41:49,008 | should increase spot: True
+2022-09-16 14:41:49,008 | should increase perp: False
+2022-09-16 14:41:49,008 | increase spot position
+2022-09-16 14:41:49,008 | L420: Placing spot entry order:
+2022-09-16 14:41:49,263 | moving existing limit order
+2022-09-16 14:41:49,734 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:41:49,734 | Spot margin borrow APR:                    8.76
+2022-09-16 14:41:49,734 | Perpetual funding APR:                     -14.016
+2022-09-16 14:41:49,734 | Spot/perp basis %:                         0.05426
+2022-09-16 14:41:49,734 | Spot is above Perpetual
+2022-09-16 14:41:49,735 | 
+Active positions: 2
+2022-09-16 14:41:49,735 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:41:49,735 | ETH-PERP     buy             1474.2       0.015     1
+ETH/USD     sell             1474.8       0.015     1
+
+2022-09-16 14:41:49,735 | 
+Open orders:  1
+2022-09-16 14:41:49,735 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:41:49,735 | ETH-PERP     buy           1474.0     0.015    new
+
+2022-09-16 14:41:53,736 | Cancelled an existing order
+2022-09-16 14:41:53,736 | Increasing existing position
+2022-09-16 14:41:53,736 | Increasing existing position
+2022-09-16 14:41:53,736 | waiting_for_fill: False
+2022-09-16 14:41:53,736 | should_add_to_positions: True
+2022-09-16 14:41:53,736 | should_unwind_positions: False
+2022-09-16 14:41:53,736 | total open size: 88.473
+2022-09-16 14:41:53,736 | account size: 130
+2022-09-16 14:41:53,736 | at_max_size: False
+2022-09-16 14:41:53,736 | exposure: None
+2022-09-16 14:41:53,736 | should increase spot: True
+2022-09-16 14:41:53,736 | should increase perp: True
+2022-09-16 14:41:53,736 | increase spot position
+2022-09-16 14:41:53,736 | L420: Placing spot entry order:
+2022-09-16 14:41:53,982 | increase perp position
+2022-09-16 14:41:53,983 | L437: Placing perp entry order:
+2022-09-16 14:41:54,206 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:41:54,206 | Spot margin borrow APR:                    8.76
+2022-09-16 14:41:54,206 | Perpetual funding APR:                     -14.016
+2022-09-16 14:41:54,206 | Spot/perp basis %:                         0.06103
+2022-09-16 14:41:54,206 | Spot is above Perpetual
+2022-09-16 14:41:54,207 | 
+Active positions: 2
+2022-09-16 14:41:54,207 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:41:54,207 | ETH-PERP     buy             1474.2       0.03     2
+ETH/USD     sell             1474.9       0.03     2
+
+2022-09-16 14:41:54,207 | 
+Open orders:  0
+2022-09-16 14:41:54,207 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:41:54,207 | 
+2022-09-16 14:41:58,214 | Created a new order
+2022-09-16 14:41:58,214 | Created a new order
+2022-09-16 14:41:58,215 | waiting_for_fill: True
+2022-09-16 14:41:58,215 | should_add_to_positions: True
+2022-09-16 14:41:58,215 | should_unwind_positions: False
+2022-09-16 14:41:58,215 | total open size: 88.473
+2022-09-16 14:41:58,215 | account size: 130
+2022-09-16 14:41:58,215 | at_max_size: False
+2022-09-16 14:41:58,215 | exposure: None
+2022-09-16 14:41:58,215 | moving existing limit order
+2022-09-16 14:41:58,685 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:41:58,685 | Spot margin borrow APR:                    8.76
+2022-09-16 14:41:58,685 | Perpetual funding APR:                     -14.016
+2022-09-16 14:41:58,685 | Spot/perp basis %:                         0.06103
+2022-09-16 14:41:58,685 | Spot is above Perpetual
+2022-09-16 14:41:58,685 | 
+Active positions: 2
+2022-09-16 14:41:58,685 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:41:58,685 | ETH-PERP     buy             1474.2       0.03     2
+ETH/USD     sell             1474.9       0.03     2
+
+2022-09-16 14:41:58,685 | 
+Open orders:  2
+2022-09-16 14:41:58,685 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:41:58,685 | ETH/USD     sell           1475.3     0.015    new
+ETH-PERP     buy           1474.2     0.015    new
+
+2022-09-16 14:42:02,701 | Cancelled an existing order
+2022-09-16 14:42:02,701 | Increasing existing position
+2022-09-16 14:42:02,701 | waiting_for_fill: False
+2022-09-16 14:42:02,701 | should_add_to_positions: True
+2022-09-16 14:42:02,702 | should_unwind_positions: False
+2022-09-16 14:42:02,702 | total open size: 110.59965
+2022-09-16 14:42:02,702 | account size: 130
+2022-09-16 14:42:02,702 | at_max_size: False
+2022-09-16 14:42:02,702 | exposure: ['ETH-PERP', 'buy', 'spot']
+2022-09-16 14:42:02,702 | should increase spot: False
+2022-09-16 14:42:02,702 | should increase perp: True
+2022-09-16 14:42:02,702 | cutoff price for open order: 1504.4694
+2022-09-16 14:42:02,702 | moving existing limit order
+2022-09-16 14:42:03,167 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:03,167 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:03,167 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:03,167 | Spot/perp basis %:                         0.05424
+2022-09-16 14:42:03,167 | Spot is above Perpetual
+2022-09-16 14:42:03,167 | 
+Active positions: 2
+2022-09-16 14:42:03,167 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:03,167 | ETH-PERP     buy             1474.2       0.03     2
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:03,168 | 
+Open orders:  1
+2022-09-16 14:42:03,168 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:03,168 | ETH-PERP     buy           1474.2     0.015    new
+
+2022-09-16 14:42:07,176 | Cancelled an existing order
+2022-09-16 14:42:07,176 | Created a new order
+2022-09-16 14:42:07,176 | waiting_for_fill: True
+2022-09-16 14:42:07,176 | should_add_to_positions: True
+2022-09-16 14:42:07,176 | should_unwind_positions: False
+2022-09-16 14:42:07,177 | total open size: 110.59965
+2022-09-16 14:42:07,177 | account size: 130
+2022-09-16 14:42:07,177 | at_max_size: False
+2022-09-16 14:42:07,177 | exposure: ['ETH-PERP', 'buy', 'spot']
+2022-09-16 14:42:07,177 | cutoff price for open order: 1504.4694
+2022-09-16 14:42:07,177 | moving existing limit order
+2022-09-16 14:42:07,627 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:07,627 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:07,627 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:07,627 | Spot/perp basis %:                         0.061
+2022-09-16 14:42:07,627 | Spot is above Perpetual
+2022-09-16 14:42:07,628 | 
+Active positions: 2
+2022-09-16 14:42:07,628 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:07,628 | ETH-PERP     buy             1474.2       0.03     2
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:07,628 | 
+Open orders:  1
+2022-09-16 14:42:07,628 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:07,628 | ETH-PERP     buy           1474.5     0.015    new
+
+2022-09-16 14:42:11,630 | Cancelled an existing order
+2022-09-16 14:42:11,630 | Increasing existing position
+2022-09-16 14:42:11,631 | waiting_for_fill: False
+2022-09-16 14:42:11,631 | should_add_to_positions: False
+2022-09-16 14:42:11,631 | should_unwind_positions: False
+2022-09-16 14:42:11,631 | total open size: 132.72615
+2022-09-16 14:42:11,631 | account size: 130
+2022-09-16 14:42:11,631 | at_max_size: True
+2022-09-16 14:42:11,631 | exposure: None
+2022-09-16 14:42:11,632 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:11,632 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:11,632 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:11,632 | Spot/perp basis %:                         0.061
+2022-09-16 14:42:11,632 | Spot is above Perpetual
+2022-09-16 14:42:11,632 | 
+Active positions: 2
+2022-09-16 14:42:11,632 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:11,632 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:11,632 | 
+Open orders:  0
+2022-09-16 14:42:11,632 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:11,632 | 
+2022-09-16 14:42:15,640 | waiting_for_fill: False
+2022-09-16 14:42:15,640 | should_add_to_positions: False
+2022-09-16 14:42:15,640 | should_unwind_positions: False
+2022-09-16 14:42:15,640 | total open size: 132.72615
+2022-09-16 14:42:15,641 | account size: 130
+2022-09-16 14:42:15,641 | at_max_size: True
+2022-09-16 14:42:15,641 | exposure: None
+2022-09-16 14:42:15,641 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:15,641 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:15,641 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:15,641 | Spot/perp basis %:                         0.06101
+2022-09-16 14:42:15,641 | Spot is above Perpetual
+2022-09-16 14:42:15,642 | 
+Active positions: 2
+2022-09-16 14:42:15,642 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:15,642 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:15,642 | 
+Open orders:  0
+2022-09-16 14:42:15,642 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:15,642 | 
+2022-09-16 14:42:19,656 | waiting_for_fill: False
+2022-09-16 14:42:19,656 | should_add_to_positions: False
+2022-09-16 14:42:19,656 | should_unwind_positions: False
+2022-09-16 14:42:19,657 | total open size: 132.72615
+2022-09-16 14:42:19,657 | account size: 130
+2022-09-16 14:42:19,657 | at_max_size: True
+2022-09-16 14:42:19,657 | exposure: None
+2022-09-16 14:42:19,657 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:19,657 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:19,657 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:19,657 | Spot/perp basis %:                         0.06101
+2022-09-16 14:42:19,657 | Spot is above Perpetual
+2022-09-16 14:42:19,658 | 
+Active positions: 2
+2022-09-16 14:42:19,658 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:19,658 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:19,658 | 
+Open orders:  0
+2022-09-16 14:42:19,658 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:19,658 | 
+2022-09-16 14:42:23,673 | waiting_for_fill: False
+2022-09-16 14:42:23,673 | should_add_to_positions: False
+2022-09-16 14:42:23,673 | should_unwind_positions: False
+2022-09-16 14:42:23,673 | total open size: 132.72615
+2022-09-16 14:42:23,673 | account size: 130
+2022-09-16 14:42:23,673 | at_max_size: True
+2022-09-16 14:42:23,673 | exposure: None
+2022-09-16 14:42:23,674 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:23,674 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:23,674 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:23,674 | Spot/perp basis %:                         0.06101
+2022-09-16 14:42:23,674 | Spot is above Perpetual
+2022-09-16 14:42:23,674 | 
+Active positions: 2
+2022-09-16 14:42:23,674 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:23,674 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:23,674 | 
+Open orders:  0
+2022-09-16 14:42:23,674 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:23,675 | 
+2022-09-16 14:42:27,682 | waiting_for_fill: False
+2022-09-16 14:42:27,682 | should_add_to_positions: False
+2022-09-16 14:42:27,682 | should_unwind_positions: False
+2022-09-16 14:42:27,682 | total open size: 132.72615
+2022-09-16 14:42:27,682 | account size: 130
+2022-09-16 14:42:27,682 | at_max_size: True
+2022-09-16 14:42:27,682 | exposure: None
+2022-09-16 14:42:27,683 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:27,683 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:27,683 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:27,683 | Spot/perp basis %:                         0.06101
+2022-09-16 14:42:27,683 | Spot is above Perpetual
+2022-09-16 14:42:27,684 | 
+Active positions: 2
+2022-09-16 14:42:27,684 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:27,684 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:27,684 | 
+Open orders:  0
+2022-09-16 14:42:27,684 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:27,684 | 
+2022-09-16 14:42:31,687 | waiting_for_fill: False
+2022-09-16 14:42:31,687 | should_add_to_positions: False
+2022-09-16 14:42:31,687 | should_unwind_positions: False
+2022-09-16 14:42:31,687 | total open size: 132.72615
+2022-09-16 14:42:31,687 | account size: 130
+2022-09-16 14:42:31,687 | at_max_size: True
+2022-09-16 14:42:31,687 | exposure: None
+2022-09-16 14:42:31,688 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:31,688 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:31,688 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:31,688 | Spot/perp basis %:                         0.05423
+2022-09-16 14:42:31,688 | Spot is above Perpetual
+2022-09-16 14:42:31,688 | 
+Active positions: 2
+2022-09-16 14:42:31,688 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:31,688 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:31,688 | 
+Open orders:  0
+2022-09-16 14:42:31,688 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:31,688 | 
+2022-09-16 14:42:35,689 | waiting_for_fill: False
+2022-09-16 14:42:35,689 | should_add_to_positions: False
+2022-09-16 14:42:35,689 | should_unwind_positions: False
+2022-09-16 14:42:35,690 | total open size: 132.72615
+2022-09-16 14:42:35,690 | account size: 130
+2022-09-16 14:42:35,690 | at_max_size: True
+2022-09-16 14:42:35,690 | exposure: None
+2022-09-16 14:42:35,690 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:35,690 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:35,690 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:35,690 | Spot/perp basis %:                         0.05423
+2022-09-16 14:42:35,690 | Spot is above Perpetual
+2022-09-16 14:42:35,690 | 
+Active positions: 2
+2022-09-16 14:42:35,691 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:35,691 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:35,691 | 
+Open orders:  0
+2022-09-16 14:42:35,691 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:35,691 | 
+2022-09-16 14:42:39,694 | waiting_for_fill: False
+2022-09-16 14:42:39,694 | should_add_to_positions: False
+2022-09-16 14:42:39,694 | should_unwind_positions: False
+2022-09-16 14:42:39,694 | total open size: 132.72615
+2022-09-16 14:42:39,695 | account size: 130
+2022-09-16 14:42:39,695 | at_max_size: True
+2022-09-16 14:42:39,695 | exposure: None
+2022-09-16 14:42:39,695 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:39,695 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:39,695 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:39,695 | Spot/perp basis %:                         0.06781
+2022-09-16 14:42:39,695 | Spot is above Perpetual
+2022-09-16 14:42:39,696 | 
+Active positions: 2
+2022-09-16 14:42:39,696 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:39,696 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:39,696 | 
+Open orders:  0
+2022-09-16 14:42:39,696 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:39,696 | 
+2022-09-16 14:42:43,702 | waiting_for_fill: False
+2022-09-16 14:42:43,702 | should_add_to_positions: False
+2022-09-16 14:42:43,702 | should_unwind_positions: False
+2022-09-16 14:42:43,702 | total open size: 132.72615
+2022-09-16 14:42:43,702 | account size: 130
+2022-09-16 14:42:43,702 | at_max_size: True
+2022-09-16 14:42:43,702 | exposure: None
+2022-09-16 14:42:43,703 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:43,703 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:43,703 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:43,703 | Spot/perp basis %:                         0.05425
+2022-09-16 14:42:43,703 | Spot is above Perpetual
+2022-09-16 14:42:43,703 | 
+Active positions: 2
+2022-09-16 14:42:43,703 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:43,703 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:43,703 | 
+Open orders:  0
+2022-09-16 14:42:43,703 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:43,703 | 
+2022-09-16 14:42:47,713 | waiting_for_fill: False
+2022-09-16 14:42:47,713 | should_add_to_positions: False
+2022-09-16 14:42:47,713 | should_unwind_positions: False
+2022-09-16 14:42:47,713 | total open size: 132.72615
+2022-09-16 14:42:47,713 | account size: 130
+2022-09-16 14:42:47,713 | at_max_size: True
+2022-09-16 14:42:47,713 | exposure: None
+2022-09-16 14:42:47,714 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:47,714 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:47,714 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:47,714 | Spot/perp basis %:                         0.05425
+2022-09-16 14:42:47,714 | Spot is above Perpetual
+2022-09-16 14:42:47,714 | 
+Active positions: 2
+2022-09-16 14:42:47,714 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:47,714 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:47,715 | 
+Open orders:  0
+2022-09-16 14:42:47,715 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:47,715 | 
+2022-09-16 14:42:51,724 | waiting_for_fill: False
+2022-09-16 14:42:51,724 | should_add_to_positions: False
+2022-09-16 14:42:51,724 | should_unwind_positions: False
+2022-09-16 14:42:51,724 | total open size: 132.72615
+2022-09-16 14:42:51,725 | account size: 130
+2022-09-16 14:42:51,725 | at_max_size: True
+2022-09-16 14:42:51,725 | exposure: None
+2022-09-16 14:42:51,725 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:51,725 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:51,725 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:51,725 | Spot/perp basis %:                         0.05426
+2022-09-16 14:42:51,725 | Spot is above Perpetual
+2022-09-16 14:42:51,727 | 
+Active positions: 2
+2022-09-16 14:42:51,727 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:51,727 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:51,727 | 
+Open orders:  0
+2022-09-16 14:42:51,727 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:51,727 | 
+2022-09-16 14:42:55,731 | waiting_for_fill: False
+2022-09-16 14:42:55,731 | should_add_to_positions: False
+2022-09-16 14:42:55,731 | should_unwind_positions: False
+2022-09-16 14:42:55,731 | total open size: 132.72615
+2022-09-16 14:42:55,731 | account size: 130
+2022-09-16 14:42:55,731 | at_max_size: True
+2022-09-16 14:42:55,731 | exposure: None
+2022-09-16 14:42:55,732 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:55,732 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:55,732 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:55,732 | Spot/perp basis %:                         0.05426
+2022-09-16 14:42:55,732 | Spot is above Perpetual
+2022-09-16 14:42:55,732 | 
+Active positions: 2
+2022-09-16 14:42:55,732 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:55,732 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:55,732 | 
+Open orders:  0
+2022-09-16 14:42:55,732 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:55,732 | 
+2022-09-16 14:42:59,740 | waiting_for_fill: False
+2022-09-16 14:42:59,741 | should_add_to_positions: False
+2022-09-16 14:42:59,741 | should_unwind_positions: False
+2022-09-16 14:42:59,741 | total open size: 132.72615
+2022-09-16 14:42:59,741 | account size: 130
+2022-09-16 14:42:59,741 | at_max_size: True
+2022-09-16 14:42:59,741 | exposure: None
+2022-09-16 14:42:59,741 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:42:59,741 | Spot margin borrow APR:                    8.76
+2022-09-16 14:42:59,741 | Perpetual funding APR:                     -14.016
+2022-09-16 14:42:59,741 | Spot/perp basis %:                         0.05425
+2022-09-16 14:42:59,741 | Spot is above Perpetual
+2022-09-16 14:42:59,742 | 
+Active positions: 2
+2022-09-16 14:42:59,742 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:42:59,742 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:42:59,742 | 
+Open orders:  0
+2022-09-16 14:42:59,742 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:42:59,742 | 
+2022-09-16 14:43:03,749 | Manual exit signal detected
+2022-09-16 14:43:03,749 | waiting_for_fill: False
+2022-09-16 14:43:03,749 | should_add_to_positions: False
+2022-09-16 14:43:03,749 | should_unwind_positions: True
+2022-09-16 14:43:03,750 | total open size: 132.72615
+2022-09-16 14:43:03,750 | account size: 130
+2022-09-16 14:43:03,750 | at_max_size: True
+2022-09-16 14:43:03,750 | exposure: None
+2022-09-16 14:43:03,750 | should increase spot: False
+2022-09-16 14:43:03,750 | should increase perp: False
+2022-09-16 14:43:03,750 | reduce spot position
+2022-09-16 14:43:03,750 | L498 Placing spot exit order
+2022-09-16 14:43:04,452 | reduce perp position
+2022-09-16 14:43:04,452 | L517 placing perp exit order
+2022-09-16 14:43:04,668 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:04,668 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:04,668 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:04,668 | Spot/perp basis %:                         0.05425
+2022-09-16 14:43:04,668 | Spot is above Perpetual
+2022-09-16 14:43:04,668 | 
+Active positions: 2
+2022-09-16 14:43:04,668 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:04,668 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:43:04,668 | 
+Open orders:  0
+2022-09-16 14:43:04,668 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:04,669 | 
+2022-09-16 14:43:08,681 | Created a new order
+2022-09-16 14:43:08,681 | Created a new order
+2022-09-16 14:43:08,682 | waiting_for_fill: False
+2022-09-16 14:43:08,682 | should_add_to_positions: False
+2022-09-16 14:43:08,682 | should_unwind_positions: True
+2022-09-16 14:43:08,682 | total open size: 132.72615
+2022-09-16 14:43:08,682 | account size: 130
+2022-09-16 14:43:08,682 | at_max_size: True
+2022-09-16 14:43:08,682 | exposure: None
+2022-09-16 14:43:08,682 | should increase spot: False
+2022-09-16 14:43:08,682 | should increase perp: False
+2022-09-16 14:43:08,682 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:08,682 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:08,682 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:08,682 | Spot/perp basis %:                         0.05425
+2022-09-16 14:43:08,682 | Spot is above Perpetual
+2022-09-16 14:43:08,683 | 
+Active positions: 2
+2022-09-16 14:43:08,683 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:08,683 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:43:08,683 | 
+Open orders:  2
+2022-09-16 14:43:08,683 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:08,683 | ETH/USD     buy           1474.9     0.015    new
+ETH-PERP     sell           1474.5     0.015    new
+
+2022-09-16 14:43:12,698 | waiting_for_fill: False
+2022-09-16 14:43:12,699 | should_add_to_positions: False
+2022-09-16 14:43:12,699 | should_unwind_positions: True
+2022-09-16 14:43:12,699 | total open size: 132.72615
+2022-09-16 14:43:12,699 | account size: 130
+2022-09-16 14:43:12,699 | at_max_size: True
+2022-09-16 14:43:12,699 | exposure: None
+2022-09-16 14:43:12,699 | should increase spot: False
+2022-09-16 14:43:12,699 | should increase perp: False
+2022-09-16 14:43:12,700 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:12,700 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:12,700 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:12,700 | Spot/perp basis %:                         0.04747
+2022-09-16 14:43:12,700 | Spot is above Perpetual
+2022-09-16 14:43:12,700 | 
+Active positions: 2
+2022-09-16 14:43:12,700 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:12,700 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.045     3
+
+2022-09-16 14:43:12,700 | 
+Open orders:  2
+2022-09-16 14:43:12,700 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:12,700 | ETH/USD     buy           1474.9     0.015    new
+ETH-PERP     sell           1474.5     0.015    new
+
+2022-09-16 14:43:16,704 | Decreasing existing postion
+2022-09-16 14:43:16,704 | waiting_for_fill: False
+2022-09-16 14:43:16,704 | should_add_to_positions: False
+2022-09-16 14:43:16,704 | should_unwind_positions: True
+2022-09-16 14:43:16,704 | total open size: 110.60159999999999
+2022-09-16 14:43:16,704 | account size: 130
+2022-09-16 14:43:16,704 | at_max_size: False
+2022-09-16 14:43:16,704 | exposure: ['ETH/USD', 'sell', 'perp']
+2022-09-16 14:43:16,704 | should increase spot: False
+2022-09-16 14:43:16,704 | should increase perp: False
+2022-09-16 14:43:16,704 | cutoff price for open order: 1445.01
+2022-09-16 14:43:16,705 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:16,705 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:16,705 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:16,705 | Spot/perp basis %:                         0.04069
+2022-09-16 14:43:16,705 | Spot is above Perpetual
+2022-09-16 14:43:16,705 | 
+Active positions: 2
+2022-09-16 14:43:16,705 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:16,705 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.03     2
+
+2022-09-16 14:43:16,705 | 
+Open orders:  1
+2022-09-16 14:43:16,705 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:16,705 | ETH-PERP     sell           1474.5     0.015    new
+
+2022-09-16 14:43:20,706 | waiting_for_fill: False
+2022-09-16 14:43:20,706 | should_add_to_positions: False
+2022-09-16 14:43:20,706 | should_unwind_positions: True
+2022-09-16 14:43:20,706 | total open size: 110.60159999999999
+2022-09-16 14:43:20,706 | account size: 130
+2022-09-16 14:43:20,706 | at_max_size: False
+2022-09-16 14:43:20,706 | exposure: ['ETH/USD', 'sell', 'perp']
+2022-09-16 14:43:20,706 | should increase spot: False
+2022-09-16 14:43:20,706 | should increase perp: False
+2022-09-16 14:43:20,706 | cutoff price for open order: 1445.01
+2022-09-16 14:43:20,707 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:20,707 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:20,707 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:20,707 | Spot/perp basis %:                         0.04069
+2022-09-16 14:43:20,707 | Spot is above Perpetual
+2022-09-16 14:43:20,707 | 
+Active positions: 2
+2022-09-16 14:43:20,707 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:20,708 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.03     2
+
+2022-09-16 14:43:20,708 | 
+Open orders:  1
+2022-09-16 14:43:20,708 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:20,708 | ETH-PERP     sell           1474.5     0.015    new
+
+2022-09-16 14:43:24,713 | waiting_for_fill: False
+2022-09-16 14:43:24,713 | should_add_to_positions: False
+2022-09-16 14:43:24,713 | should_unwind_positions: True
+2022-09-16 14:43:24,713 | total open size: 110.60159999999999
+2022-09-16 14:43:24,713 | account size: 130
+2022-09-16 14:43:24,713 | at_max_size: False
+2022-09-16 14:43:24,713 | exposure: ['ETH/USD', 'sell', 'perp']
+2022-09-16 14:43:24,713 | should increase spot: False
+2022-09-16 14:43:24,713 | should increase perp: False
+2022-09-16 14:43:24,713 | cutoff price for open order: 1445.01
+2022-09-16 14:43:24,713 | moving existing limit order
+2022-09-16 14:43:25,201 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:25,201 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:25,201 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:25,201 | Spot/perp basis %:                         0.06104
+2022-09-16 14:43:25,201 | Spot is above Perpetual
+2022-09-16 14:43:25,201 | 
+Active positions: 2
+2022-09-16 14:43:25,201 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:25,201 | ETH-PERP     buy             1474.5       0.045     3
+ETH/USD     sell             1474.97       0.03     2
+
+2022-09-16 14:43:25,201 | 
+Open orders:  1
+2022-09-16 14:43:25,201 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:25,201 | ETH-PERP     sell           1474.5     0.015    new
+
+2022-09-16 14:43:29,217 | Cancelled an existing order
+2022-09-16 14:43:29,217 | Decreasing existing postion
+2022-09-16 14:43:29,217 | waiting_for_fill: False
+2022-09-16 14:43:29,217 | should_add_to_positions: False
+2022-09-16 14:43:29,217 | should_unwind_positions: True
+2022-09-16 14:43:29,217 | total open size: 88.4841
+2022-09-16 14:43:29,217 | account size: 130
+2022-09-16 14:43:29,217 | at_max_size: False
+2022-09-16 14:43:29,217 | exposure: None
+2022-09-16 14:43:29,217 | should increase spot: False
+2022-09-16 14:43:29,217 | should increase perp: False
+2022-09-16 14:43:29,217 | reduce spot position
+2022-09-16 14:43:29,217 | L498 Placing spot exit order
+2022-09-16 14:43:29,469 | reduce perp position
+2022-09-16 14:43:29,469 | L517 placing perp exit order
+2022-09-16 14:43:29,718 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:29,718 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:29,718 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:29,718 | Spot/perp basis %:                         0.04749
+2022-09-16 14:43:29,718 | Spot is above Perpetual
+2022-09-16 14:43:29,719 | 
+Active positions: 2
+2022-09-16 14:43:29,719 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:29,719 | ETH-PERP     buy             1474.5       0.03     2
+ETH/USD     sell             1474.97       0.03     2
+
+2022-09-16 14:43:29,719 | 
+Open orders:  0
+2022-09-16 14:43:29,719 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:29,719 | 
+2022-09-16 14:43:33,734 | Created a new order
+2022-09-16 14:43:33,734 | Decreasing existing postion
+2022-09-16 14:43:33,734 | waiting_for_fill: False
+2022-09-16 14:43:33,734 | should_add_to_positions: False
+2022-09-16 14:43:33,734 | should_unwind_positions: True
+2022-09-16 14:43:33,734 | total open size: 66.3666
+2022-09-16 14:43:33,734 | account size: 130
+2022-09-16 14:43:33,734 | at_max_size: False
+2022-09-16 14:43:33,734 | exposure: ['ETH-PERP', 'buy', 'spot']
+2022-09-16 14:43:33,734 | should increase spot: False
+2022-09-16 14:43:33,734 | should increase perp: False
+2022-09-16 14:43:33,734 | cutoff price for open order: 1504.4694
+2022-09-16 14:43:33,734 | moving existing limit order
+2022-09-16 14:43:34,245 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:34,245 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:34,245 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:34,245 | Spot/perp basis %:                         0.05426
+2022-09-16 14:43:34,245 | Spot is above Perpetual
+2022-09-16 14:43:34,246 | 
+Active positions: 2
+2022-09-16 14:43:34,246 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:34,246 | ETH-PERP     buy             1474.5       0.015     1
+ETH/USD     sell             1474.97       0.03     2
+
+2022-09-16 14:43:34,246 | 
+Open orders:  1
+2022-09-16 14:43:34,246 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:34,246 | ETH/USD     buy           1474.2     0.015    new
+
+2022-09-16 14:43:38,253 | Cancelled an existing order
+2022-09-16 14:43:38,253 | Decreasing existing postion
+2022-09-16 14:43:38,253 | waiting_for_fill: False
+2022-09-16 14:43:38,253 | should_add_to_positions: False
+2022-09-16 14:43:38,253 | should_unwind_positions: True
+2022-09-16 14:43:38,253 | total open size: 44.24205
+2022-09-16 14:43:38,253 | account size: 130
+2022-09-16 14:43:38,253 | at_max_size: False
+2022-09-16 14:43:38,253 | exposure: None
+2022-09-16 14:43:38,253 | should increase spot: False
+2022-09-16 14:43:38,253 | should increase perp: False
+2022-09-16 14:43:38,253 | reduce spot position
+2022-09-16 14:43:38,253 | L498 Placing spot exit order
+2022-09-16 14:43:39,039 | reduce perp position
+2022-09-16 14:43:39,039 | L517 placing perp exit order
+2022-09-16 14:43:39,278 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:39,279 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:39,279 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:39,279 | Spot/perp basis %:                         0.06104
+2022-09-16 14:43:39,279 | Spot is above Perpetual
+2022-09-16 14:43:39,279 | 
+Active positions: 2
+2022-09-16 14:43:39,279 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:39,279 | ETH-PERP     buy             1474.5       0.015     1
+ETH/USD     sell             1474.97       0.015     1
+
+2022-09-16 14:43:39,279 | 
+Open orders:  0
+2022-09-16 14:43:39,279 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:39,279 | 
+2022-09-16 14:43:43,281 | Decreasing existing postion
+2022-09-16 14:43:43,281 | Created a new order
+2022-09-16 14:43:43,281 | waiting_for_fill: True
+2022-09-16 14:43:43,281 | should_add_to_positions: False
+2022-09-16 14:43:43,281 | should_unwind_positions: True
+2022-09-16 14:43:43,281 | total open size: 22.1175
+2022-09-16 14:43:43,281 | account size: 130
+2022-09-16 14:43:43,281 | at_max_size: False
+2022-09-16 14:43:43,281 | exposure: ['ETH/USD', 'sell', 'spot']
+2022-09-16 14:43:43,281 | cutoff price for open order: 1445.01
+2022-09-16 14:43:43,282 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:43,282 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:43,282 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:43,282 | Spot/perp basis %:                         0.04748
+2022-09-16 14:43:43,282 | Spot is above Perpetual
+2022-09-16 14:43:43,282 | 
+Active positions: 1
+2022-09-16 14:43:43,282 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:43,283 | ETH-PERP     buy             1474.5       0.015     1
+
+2022-09-16 14:43:43,283 | 
+Open orders:  1
+2022-09-16 14:43:43,283 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:43,283 | ETH-PERP     sell           1474.3     0.015    new
+
+2022-09-16 14:43:47,285 | waiting_for_fill: True
+2022-09-16 14:43:47,285 | should_add_to_positions: False
+2022-09-16 14:43:47,285 | should_unwind_positions: True
+2022-09-16 14:43:47,285 | total open size: 22.1175
+2022-09-16 14:43:47,285 | account size: 130
+2022-09-16 14:43:47,286 | at_max_size: False
+2022-09-16 14:43:47,286 | exposure: ['ETH/USD', 'sell', 'spot']
+2022-09-16 14:43:47,286 | cutoff price for open order: 1445.01
+2022-09-16 14:43:47,286 | moving existing limit order
+2022-09-16 14:43:47,737 | 
+-----------------  ETH/USD  :  ETH-PERP  -----------------
+2022-09-16 14:43:47,737 | Spot margin borrow APR:                    8.76
+2022-09-16 14:43:47,737 | Perpetual funding APR:                     -14.016
+2022-09-16 14:43:47,737 | Spot/perp basis %:                         0.05426
+2022-09-16 14:43:47,737 | Spot is above Perpetual
+2022-09-16 14:43:47,737 | 
+Active positions: 1
+2022-09-16 14:43:47,737 | Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- 
+2022-09-16 14:43:47,737 | ETH-PERP     buy             1474.5       0.015     1
+
+2022-09-16 14:43:47,737 | 
+Open orders:  1
+2022-09-16 14:43:47,737 | Ticker ---- Direction ----- Price ---- Size ---- Status ----
+2022-09-16 14:43:47,737 | ETH-PERP     sell           1474.3     0.015    new
+
+2022-09-16 14:43:51,741 | Cancelled an existing order
+2022-09-16 14:43:51,741 | Decreasing existing postion
+2022-09-16 14:43:51,742 | waiting_for_fill: False
+2022-09-16 14:43:51,742 | should_add_to_positions: False
+2022-09-16 14:43:51,742 | should_unwind_positions: True
+2022-09-16 14:43:51,742 | total open size: 0
+2022-09-16 14:43:51,742 | account size: 130
+2022-09-16 14:43:51,742 | at_max_size: False
+2022-09-16 14:43:51,742 | exposure: None

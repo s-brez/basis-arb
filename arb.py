@@ -4,10 +4,12 @@ from ftx_ws import FtxWebsocketClient
 from collections import defaultdict
 from statistics import fmean
 from datetime import datetime
+from pathlib import Path
 from time import sleep
 import numpy as np
 import subprocess
 import keyboard
+import logging
 import json
 import sys
 import os
@@ -79,31 +81,49 @@ def run():
     # 1. Validate inputs and verify connection
     # -----------------------------------------------------------------
 
+    # Set up logging
+    log_path = "logs"
+    Path(log_path).mkdir(parents=True, exist_ok=True)
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s | %(message)s')
+    file_handler = logging.FileHandler(log_path + "/" + str(int(datetime.now().timestamp())) + ".log")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
     # Load keys
     api_key = os.environ['BASIS_API_KEY_FTX']
     api_secret = os.environ['BASIS_API_SECRET_FTX']
     if api_key is None or api_secret is None:
-        raise ValueError('API keys not found.')
+        err_msg = 'API keys not found.'
+        logger.info(err_msg)
+        raise ValueError(err_msg)
 
     # Init connection clients
     ws = FtxWebsocketClient(api_key, api_secret, SUBACCOUNT)
     rest = FtxRestClient(api_key, api_secret, SUBACCOUNT)
     if not ws or not rest:
-        raise ModuleNotFoundError('Websocket or REST client failed to init.')
+        err_msg = 'Websocket or REST client failed to init.'
+        logger.info(err_msg)
+        raise ModuleNotFoundError(err_msg)
 
     # Validate instrument symbols
     valid_tickers = [m['name'] for m in rest.get_markets()]
     if MARKET[0] not in valid_tickers or MARKET[1] not in valid_tickers:
-        raise ValueError('Target market ticker invalid. Check ticker codes and restart program.')
+        err_msg = 'Target market ticker invalid. Check ticker codes and restart program.'
+        logger.info(err_msg)
+        raise ValueError(err_msg)
 
     # Validate account starting state
     positions, orders = rest.get_positions(), rest.get_open_orders()
     if positions or orders:
         print(json.dumps(positions, indent=2))
         print(json.dumps(orders, indent=2))
-        error_message = "Existing positions or orders detected. Close all positions, orders and margin borrows, then restart program." \
-                        " Ensure margin collateral is denominated in an asset you will not be trading e.g hold Tether if trading BTC spot and BTC perpetual, dont hold BTC or USD."
-        raise Exception(error_message)
+        err_msg = "Existing positions or orders detected. Close all positions, orders and margin borrows, then restart program." \
+                    " Ensure margin collateral is denominated in an asset you will not be trading e.g hold Tether if trading BTC spot and BTC perpetual, dont hold BTC or USD."
+        logger.info(err_msg)
+        raise Exception(err_msg)
 
     # Verify websocket is subscribed and receiving data
     ws_data_ready, wait_time = False, 0
@@ -117,7 +137,9 @@ def run():
             sleep(1)
             wait_time += 1
         if wait_time > 10:
-            raise Exception("Unable to subscribe to exchange websocket channels.")
+            err_msg = "Unable to subscribe to exchange websocket channels."
+            logger.info(err_msg)
+            raise Exception(err_msg)
 
     borrow = round(float([b['estimate'] for b in rest.get_borrow_rates() if b['coin'] == MARKET[0].split('/')[0]][0] * 100), 4)
     funding = round(float(rest.get_funding_rates(MARKET[1])[0]['rate']) * 100, 4)
@@ -156,8 +178,7 @@ def run():
 
                         # Placement
                         if order_updates[oId]['status'] == 'new' and order_updates[oId]['filledSize'] == 0.0:
-                            if DEBUG_OUTPUT:
-                                print("Created a new order")
+                            logger.info("Created a new order")
                             orders[oId] = order_updates[oId]
                             last_update_time[oId] = order_updates[oId]['msg_time']
                             waiting_for_fill = True
@@ -166,11 +187,12 @@ def run():
                         elif order_updates[oId]['status'] == 'closed' and order_updates[oId]['filledSize'] == 0.0:
                             try:
                                 del orders[oId]
-                                if DEBUG_OUTPUT:
-                                    print("Cancelled an existing order.")
+                                logger.info("Cancelled an existing order")
                             except KeyError:
                                 last_update_time[oId] = order_updates[oId]['msg_time']
-                                raise Exception("\n\nWarning: Unexpected cancellation detected. Small order rate limits may have been exceeded. Manually verify positions, orders and exposure are safe. Close all positions and orders and restart program. If unexpected limit order cancellation persists wait 1 hour before retrying.")
+                                err_msg = "Warning: Unexpected cancellation detected. Small order rate limits may have been exceeded. Manually verify positions, orders and exposure are safe. Close all positions and orders and restart program. If unexpected limit order cancellation persists wait 1 hour before retrying."
+                                logger.info(err_msg)
+                                raise Exception(err_msg)
                             last_update_time[oId] = order_updates[oId]['msg_time']
                             waiting_for_fill = False
 
@@ -188,8 +210,7 @@ def run():
                             if ticker in positions.keys():
 
                                 if order_updates[oId]['side'] == positions[ticker]['side']:
-                                    if DEBUG_OUTPUT:
-                                        print("Increasing existing position")
+                                    logger.info("Increasing existing position")
                                     positions[ticker]['size'] = round(positions[ticker]['size'] + order_updates[oId]['size'], 4)
                                     positions[ticker]['fillCount'] += 1
                                     w_pos = (positions[ticker]['fillCount'] - 1) / positions[ticker]['fillCount']
@@ -198,8 +219,7 @@ def run():
                                     positions[ticker]['avgEntryPrice'] = round(avg_entry, 2)
 
                                 else:
-                                    if DEBUG_OUTPUT:
-                                        print("Decreasing existing postion")
+                                    logger.info("Decreasing existing postion")
                                     positions[ticker]['size'] = round(positions[ticker]['size'] - order_updates[oId]['size'], 4)
                                     positions[ticker]['fillCount'] -= 1
                                     if positions[ticker]['size'] == 0.0:
@@ -207,8 +227,8 @@ def run():
 
                             # Create new position record if none exists
                             else:
-                                if DEBUG_OUTPUT:
-                                    print("creating new", instrument_type, "position")
+                                msg = "creating new " + instrument_type + " position"
+                                logger.info(msg)
                                 positions[ticker] = {'ticker': ticker, 'type': instrument_type, 'size': order_updates[oId]['filledSize'], 'side': order_updates[oId]['side'], 'avgEntryPrice': order_updates[oId]['avgFillPrice'], 'fillCount': 1}
                             try:
                                 del orders[oId]
@@ -228,6 +248,7 @@ def run():
 
             # Refresh funding rates every 5 min
             if int(datetime.now().timestamp()) % 300 == 0:
+                logger.info("Updating funding rates")
                 borrow = round(float([b['estimate'] for b in rest.get_borrow_rates() if b['coin'] == MARKET[0].split('/')[0]][0] * 100), 4)
                 funding = round(float(rest.get_funding_rates(MARKET[1])[0]['rate']) * 100, 4)
 
@@ -270,6 +291,7 @@ def run():
                     print("START EXITING POSITIONS")
                     print("Basis convergence")
                     print("-------------------------------------------------------")
+                    logger.info("Basis convergence exit condition detected")
                     should_unwind_positions = True
                     should_add_to_positions = False
                     waiting_for_fill = False
@@ -280,6 +302,7 @@ def run():
                     print("START EXITING POSITIONS")
                     print("Unfavourable funding APR")
                     print("-------------------------------------------------------")
+                    logger.info("Unfavourable funding APR exit condition detected")
                     should_unwind_positions = True
                     should_add_to_positions = False
                     waiting_for_fill = False
@@ -290,6 +313,7 @@ def run():
                     print("START EXITING POSITIONS")
                     print("Manual exit signal")
                     print("-------------------------------------------------------")
+                    logger.info("Manual exit signal detected")
                     should_unwind_positions = True
                     should_add_to_positions = False
                     waiting_for_fill = False
@@ -303,14 +327,13 @@ def run():
                 #     should_add_to_positions = False
                 #     waiting_for_fill = False
 
-            if DEBUG_OUTPUT:
-                print("waiting_for_fill:", waiting_for_fill)
-                print("should_add_to_positions:", should_add_to_positions)
-                print("should_unwind_positions:", should_unwind_positions)
-                print("total open size:", total_open_size)
-                print("account size:", ACCOUNT_SIZE)
-                print("at_max_size:", at_max_size)
-                print("exposure:", exposure)
+            logger.info(str("waiting_for_fill: " + str(waiting_for_fill)))
+            logger.info(str("should_add_to_positions: " + str(should_add_to_positions)))
+            logger.info(str("should_unwind_positions: " + str(should_unwind_positions)))
+            logger.info(str("total open size: " + str(total_open_size)))
+            logger.info(str("account size: " + str(ACCOUNT_SIZE)))
+            logger.info(str("at_max_size: " + str(at_max_size)))
+            logger.info(str("exposure: " + str(exposure)))
 
             # Add to positions
             if not should_unwind_positions and not at_max_size:
@@ -320,9 +343,11 @@ def run():
                             should_add_to_positions = True
                         else:
                             should_add_to_positions = False
+                            logger.info("No entry conditions detected.")
                             print("No entry conditions detected.")
                     else:
                         should_add_to_positions = False
+                        logger.info("Basis too small.")
                         print("Basis too small.")
 
                     if should_add_to_positions and not at_max_size:
@@ -356,8 +381,6 @@ def run():
 
                                 # Place order on side of missing position, if any.
                                 except KeyError as missing_ticker:
-                                    if DEBUG_OUTPUT:
-                                        print("inner no position for", missing_ticker)
                                     if MARKET[0] == missing_ticker:
                                         should_increase_perp = False
                                         should_increase_spot = True
@@ -371,8 +394,6 @@ def run():
 
                         # Place order on side of missing position, if any.
                         except KeyError as missing_ticker:
-                            if DEBUG_OUTPUT:
-                                print("outer no position for", missing_ticker)
                             if position_count == 0:
                                 should_increase_perp = True
                                 should_increase_spot = True
@@ -383,13 +404,11 @@ def run():
                                 should_increase_perp = True
                                 should_increase_spot = False
 
-                        if DEBUG_OUTPUT:
-                            print("should increase spot:", should_increase_spot)
-                            print("should increase perp:", should_increase_perp)
+                        logger.info(str("should increase spot: " + str(should_increase_spot)))
+                        logger.info(str("should increase perp: " + str(should_increase_perp)))
 
                         if should_increase_spot and MARKET[0] not in [o['market'] for o in orders.values()]:
-                            if DEBUG_OUTPUT:
-                                print("increase spot position")
+                            logger.info("increase spot position")
                             base_size = ACCOUNT_SIZE / ORDERS_PER_SIDE / 2 / last_price_spot
                             size = round(MARKET[2] * round(float(base_size) / MARKET[2]), 4)
                             try:
@@ -397,6 +416,7 @@ def run():
                             except KeyError:
                                 side = 'sell' if not perp_above_spot else 'buy'
                             price = ws.get_orderbook(MARKET[0])['bids'][QUOTE_INDEX][0] if side == 'buy' else ws.get_orderbook(MARKET[0])['asks'][QUOTE_INDEX][0]
+                            logger.info("L420: Placing spot entry order:")
                             if DEBUG_OUTPUT:
                                 print("Placing spot entry order:", size, side, price)
                                 quotes = ws.get_orderbook(MARKET[0])['bids'][0:5] if side == 'buy' else ws.get_orderbook(MARKET[0])['asks'][0:5]
@@ -405,8 +425,7 @@ def run():
                             should_increase_spot = False
 
                         if should_increase_perp and MARKET[1] not in [o['market'] for o in orders.values()]:
-                            if DEBUG_OUTPUT:
-                                print("increase perp position")
+                            logger.info("increase perp position")
                             base_size = ACCOUNT_SIZE / ORDERS_PER_SIDE / 2 / last_price_perp
                             size = round(MARKET[2] * round(float(base_size) / MARKET[2]), 4)
                             try:
@@ -414,6 +433,7 @@ def run():
                             except KeyError:
                                 side = 'sell' if perp_above_spot else 'buy'
                             price = ws.get_orderbook(MARKET[1])['bids'][QUOTE_INDEX][0] if side == 'buy' else ws.get_orderbook(MARKET[1])['asks'][QUOTE_INDEX][0]
+                            logger.info("L437: Placing perp entry order:")
                             if DEBUG_OUTPUT:
                                 print("Placing perp entry order:", size, side, price)
                                 quotes = ws.get_orderbook(MARKET[1])['bids'][0:5] if side == 'buy' else ws.get_orderbook(MARKET[1])['asks'][0:5]
@@ -457,9 +477,8 @@ def run():
                             elif order_count == 2:
                                 waiting_for_fill = True
 
-                            if DEBUG_OUTPUT:
-                                print("should reduce spot:", should_reduce_spot)
-                                print("should reduce perp:", should_reduce_perp)
+                            logger.info(str("should increase spot: " + str(should_increase_spot)))
+                            logger.info(str("should increase perp: " + str(should_increase_perp)))
 
                         # Place order on side of missing position, if any.
                         except KeyError as missing_ticker:
@@ -472,11 +491,11 @@ def run():
 
                         if should_reduce_spot and MARKET[0] not in [o['market'] for o in orders.values()]:
                             try:
-                                if DEBUG_OUTPUT:
-                                    print("reduce spot position")
+                                logger.info("reduce spot position")
                                 size = positions[MARKET[0]]['size'] / positions[MARKET[0]]['fillCount']
                                 side = 'buy' if positions[MARKET[0]]['side'] == 'sell' else 'sell'
                                 price = ws.get_orderbook(MARKET[0])['bids'][QUOTE_INDEX][0] if side == 'buy' else ws.get_orderbook(MARKET[0])['asks'][QUOTE_INDEX][0]
+                                logger.info("L498 Placing spot exit order")
                                 if DEBUG_OUTPUT:
                                     print("Placing spot exit order:", size, side, price)
                                     print("Spot last price:", last_price_spot)
@@ -491,11 +510,11 @@ def run():
 
                         if should_reduce_perp and MARKET[1] not in [o['market'] for o in orders.values()]:
                             try:
-                                if DEBUG_OUTPUT:
-                                    print("reduce perp position")
+                                logger.info("reduce perp position")
                                 size = positions[MARKET[1]]['size'] / positions[MARKET[1]]['fillCount']
                                 side = 'sell' if positions[MARKET[1]]['side'] == 'buy' else 'buy'
                                 price = ws.get_orderbook(MARKET[1])['bids'][QUOTE_INDEX][0] if side == 'buy' else ws.get_orderbook(MARKET[1])['asks'][QUOTE_INDEX][0]
+                                logger.info("L517 placing perp exit order")
                                 if DEBUG_OUTPUT:
                                     print("Placing perp exit order:", size, side, price)
                                     print("Perp last price:", last_price_perp)
@@ -510,7 +529,6 @@ def run():
                     else:
                         print("\nTrade complete. Terminating.")
                         subprocess.run(["taskkill", "/IM", "python.exe", "/F"])
-                        # sys.exit(0)
 
             # -----------------------------------------------------------------
             # 4. Check stop-loss conditions and move open orders to follow price
@@ -533,8 +551,8 @@ def run():
                     # In future suggest using the size of the basis as the stop distance. Fixed distance is disproportionate in most cases.
                     # Using a very small basis threshold is good for testing but will mean stopping out of an entry often.
                     stop_price = entry - (entry / 100 * BAD_ENTRY_CUTOFF) if side == 'buy' else entry + (entry / 100 * BAD_ENTRY_CUTOFF)
-                    if DEBUG_OUTPUT:
-                        print("cutoff price for open order:", stop_price)
+
+                    logger.info(str("cutoff price for open order: " + str(stop_price)))
 
                     if side == 'buy' and o['price'] <= stop_price:
                         within_risk_limit = False
@@ -547,31 +565,53 @@ def run():
                             print("cutoff reached. closing exposed portion of trade and cancelling open order")
                         size = positions[market]['size'] / positions[market]['fillCount']
                         rest.cancel_order(o['id'])
+                        logger.info("L568 placing market order to close exposure")
                         rest.place_order(market, exposure[1], None, size, "market", False, False, False, None, None)
                         should_add_to_positions = False
                         waiting_for_fill = False
 
                 # Move open limit orders closer to price if order price is more than MOVE_ORDER_THRESHOLD levels from last price.
                 if within_risk_limit and abs(o['price'] - last_price) > ob_step * MOVE_ORDER_THRESHOLD and new_price != o['price']:
-                    if DEBUG_OUTPUT:
-                        print("moving existing limit order")
+                    logger.info("moving existing limit order")
                     rest.modify_order(o['id'], None, new_price, None, None)
 
-            print("----------------- " + MARKET[0] + ":" + MARKET[1] + " -----------------")
-            print("Spot margin borrow APR:                   ", round(borrow * 8760, 5))
-            print("Perpetual funding APR:                    ", round(funding * 8760, 5))
-            print("Spot/perp basis %:                        ", round(basis, 5))
+            msg_l1 = f"\n-----------------  {MARKET[0]}  :  {MARKET[1]}  -----------------"
+            msg_l2 = f"Spot margin borrow APR:                    {round(borrow * 8760, 5)}"
+            msg_l3 = f"Perpetual funding APR:                     {round(funding * 8760, 5)}"
+            msg_l4 = f"Spot/perp basis %:                         {round(basis, 5)}"
+            print(msg_l1)
+            print(msg_l2)
+            print(msg_l3)
+            print(msg_l4)
             print(above_below_message)
+            logger.info(msg_l2)
+            logger.info(msg_l3)
+            logger.info(msg_l4)
+            logger.info(above_below_message)
 
-            print("\nActive positions:", str(len(positions)))
-            print("Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- ")
+            msg_p1 = f"\nActive positions: {len(positions)}"
+            msg_p2 = f"Ticker ---- Direction ---- Avg. entry ---- Size ----  Fill count ---- "
+            msg_p3 = ""
             for p in positions.values():
-                print(f"{p['ticker']}     {p['side']}             {p['avgEntryPrice']}       {p['size']}     {p['fillCount']}")
-            print("\nOpen orders: " + str(len(orders)))
+                msg_p3 += f"{p['ticker']}     {p['side']}             {p['avgEntryPrice']}       {p['size']}     {p['fillCount']}\n"
+            print(msg_p1)
+            print(msg_p2)
+            print(msg_p3)
+            logger.info(msg_p1)
+            logger.info(msg_p2)
+            logger.info(msg_p3)
 
-            print("Ticker ---- Direction ----- Price ---- Size ---- Status ----")
+            msg_o1 = f"\nOpen orders:  {len(orders)}"
+            msg_o2 = f"Ticker ---- Direction ----- Price ---- Size ---- Status ----"
+            msg_o3 = ""
             for o in orders.values():
-                print(f"{o['market']}     {o['side']}           {o['price']}     {o['size']}    {o['status']}")
+                msg_o3 += f"{o['market']}     {o['side']}           {o['price']}     {o['size']}    {o['status']}\n"
+            print(msg_o1)
+            print(msg_o2)
+            print(msg_o3)
+            logger.info(msg_o1)
+            logger.info(msg_o2)
+            logger.info(msg_o3)
 
             print("\n\n")
             sleep(4)

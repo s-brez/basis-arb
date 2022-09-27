@@ -16,7 +16,7 @@ import os
 
 
 SUBACCOUNT = "SpotPerpAlgo"                 # Subaccount name
-MARKET = ("ETH/USD", "ETH-PERP", 0.001)     # (spot ticker, perp ticker, min size increment) Spot must be first and perp second
+MARKET = ("GST/USD", "GST-PERP", 0.1)     # (spot ticker, perp ticker, min size increment) Spot must be first and perp second
 ACCOUNT_SIZE = 130                          # Maximum combined size for both positions
 ORDERS_PER_SIDE = 3                         # Number of staggered orders used to reach max size when opening a position
 DEFAULT_BASIS_THRESHOLD = 0.0005            # Smallest percentage basis that qualifies for an entry
@@ -141,7 +141,11 @@ def run():
             logger.info(err_msg)
             raise Exception(err_msg)
 
-    borrow = round(float([b['estimate'] for b in rest.get_borrow_rates() if b['coin'] == MARKET[0].split('/')[0]][0] * 100), 4)
+    try:
+        borrow = round(float([b['estimate'] for b in rest.get_borrow_rates() if b['coin'] == MARKET[0].split('/')[0]][0] * 100), 4)
+    except IndexError:
+        borrow = 0
+
     funding = round(float(rest.get_funding_rates(MARKET[1])[0]['rate']) * 100, 4)
 
     last_update_time = defaultdict(int)
@@ -249,7 +253,10 @@ def run():
             # Refresh funding rates every 5 min
             if int(datetime.now().timestamp()) % 300 == 0:
                 logger.info("Updating funding rates")
-                borrow = round(float([b['estimate'] for b in rest.get_borrow_rates() if b['coin'] == MARKET[0].split('/')[0]][0] * 100), 4)
+                try:
+                    borrow = round(float([b['estimate'] for b in rest.get_borrow_rates() if b['coin'] == MARKET[0].split('/')[0]][0] * 100), 4)
+                except IndexError:
+                    borrow = 0
                 funding = round(float(rest.get_funding_rates(MARKET[1])[0]['rate']) * 100, 4)
 
             # Update prices and calculate basis
